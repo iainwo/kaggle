@@ -15,8 +15,27 @@ $ make requirements_dev # to install dev reqs
 # 2. feature engineer - normalizes, label encodes, fills, feature engineers
 $ make data
 
-# build model
-$ # tbd
+$ make model # output to ./models/
+
+$ make predictions # output to ./data/predictions/
+```
+
+# Other Commands
+```sh
+(wids_datathon_2020) iainwong@talisman-2:Development/wids_datathon_2020 [master●] $ make                                                                                
+Available rules:
+
+clean               Delete all compiled Python files 
+create_environment  Set up python interpreter environment 
+data                Make Dataset 
+lint                Lint using flake8 
+model               Make Model 
+predictions         Make Predictions 
+requirements        Install Python Dependencies 
+requirements_dev    Install Development Deps 
+sync_data_from_s3   Download Data from S3 
+sync_data_to_s3     Upload Data to S3 
+test_environment    Test python environment is setup correctly 
 ```
 
 Project Organization

@@ -36,6 +36,14 @@ data: requirements
 	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py data/raw data/interim
 	$(PYTHON_INTERPRETER) wids-datathon-2020/features/build_features.py data/interim data/processed
 
+## Make Model
+model: requirements
+	$(PYTHON_INTERPRETER) wids-datathon-2020/models/train_model.py data/processed models/
+
+## Make Predictions
+predictions: requirements
+	$(PYTHON_INTERPRETER) wids-datathon-2020/models/predict_model.py models/ data/raw/ data/predictions
+
 ## Delete all compiled Python files
 clean:
 	find . -type f -name "*.py[co]" -delete
