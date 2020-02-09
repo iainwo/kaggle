@@ -3,6 +3,17 @@ wids_datathon_2020
 
 The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. (Kaggle Proj) https://www.kaggle.com/c/widsdatathon2020/overview
 
+# How to use
+
+```bash
+$ make create_environment
+$ conda activate wids_datathon_2020
+$ make requirements
+$ make requirements_dev # to install dev reqs
+$ make data # will preprocess the data found in data/external for the model
+$ # tbd
+```
+
 Project Organization
 ------------
 

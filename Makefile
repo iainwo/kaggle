@@ -25,9 +25,14 @@ requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
+## Install Development Deps
+requirements_dev: test_environment
+	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
+	$(PYTHON_INTERPRETER) -m pip install -r requirements.dev.txt
+
 ## Make Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py data/raw data/processed
+	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py data/raw data/processed
 
 ## Delete all compiled Python files
 clean:
@@ -36,7 +41,7 @@ clean:
 
 ## Lint using flake8
 lint:
-	flake8 src
+	flake8 wids-datathon-2020
 
 ## Upload Data to S3
 sync_data_to_s3:
