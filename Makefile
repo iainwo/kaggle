@@ -33,7 +33,7 @@ requirements_dev: test_environment
 
 ## Make Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py data/raw data/processed
+	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py data/raw data/interim
 
 ## Delete all compiled Python files
 clean:

@@ -10,7 +10,12 @@ $ make create_environment
 $ conda activate wids_datathon_2020
 $ make requirements # will also install pip env to ipykernel for jupyterlab/hub
 $ make requirements_dev # to install dev reqs
-$ make data # will preprocess the data found in data/external for the model
+
+# 1. preprocess data
+# 2. feature engineer
+$ make data
+
+# build model
 $ # tbd
 ```
 
