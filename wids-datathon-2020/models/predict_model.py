@@ -101,12 +101,13 @@ def main(input_filepath, inference_filepath, output_filepath):
     y_proba = model.predict_proba(X)
     y_proba_death = y_proba[:,1]
     
-    y = pd.DataFrame(y_proba_death, columns=['hospital_death'])
+    y = pd.DataFrame(y_proba_death, columns=['hospital_death']).astype('float32')
     
     logger.info('persisting predictions')
     arr = scalers['encounter_id'].inverse_transform(X['encounter_id'])
     X_encounter_id = round(pd.DataFrame(arr, columns=['encounter_id'])) # round for numerical errs
-    
+    X_encounter_id = X_encounter_id.astype('int32')
+
     pd.concat([X_encounter_id, y], axis=1).to_csv(PRED_CSV_OUT, index=False)
     
 
