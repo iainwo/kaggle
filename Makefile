@@ -24,6 +24,7 @@ endif
 requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+	$(PYTHON_INTERPRETER) -m ipykernel install --user --name valence --display-name="wids-datathon-2020"
 
 ## Install Development Deps
 requirements_dev: test_environment
