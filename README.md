@@ -8,7 +8,7 @@ The challenge is to create a model that uses data from the first 24 hours of int
 ```bash
 $ make create_environment
 $ conda activate wids_datathon_2020
-$ make requirements
+$ make requirements # will also install pip env to ipykernel for jupyterlab/hub
 $ make requirements_dev # to install dev reqs
 $ make data # will preprocess the data found in data/external for the model
 $ # tbd
