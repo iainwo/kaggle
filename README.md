@@ -11,8 +11,8 @@ $ conda activate wids_datathon_2020
 $ make requirements # will also install pip env to ipykernel for jupyterlab/hub
 $ make requirements_dev # to install dev reqs
 
-# 1. preprocess data
-# 2. feature engineer
+# 1. preprocess data - unzips the data/external into data/raw, then creates train-test-split into data/interim
+# 2. feature engineer - normalizes, label encodes, fills, feature engineers
 $ make data
 
 # build model
