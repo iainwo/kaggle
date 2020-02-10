@@ -46,6 +46,7 @@ def main(input_filepath, inference_filepath, output_filepath):
     CATEGORICAL_ENCODERS = Path.cwd().joinpath(input_filepath).joinpath('categorical-encoders.pickle')
     TARGET_ENCODERS = Path.cwd().joinpath(input_filepath).joinpath('target-encoders.pickle')
     CONTINUOUS_SCALERS = Path.cwd().joinpath(input_filepath).joinpath('continuous-scalers.pickle')
+    CONTINUOUS_FILLERS = Path.cwd().joinpath(input_filepath).joinpath('continuous-scalers.pickle')
 
     # model
     MODEL = Path.cwd().joinpath(input_filepath).joinpath('catboost_model.dump')
@@ -65,9 +66,15 @@ def main(input_filepath, inference_filepath, output_filepath):
     label_encoders = read_obj(CATEGORICAL_ENCODERS)
     scalers = read_obj(TARGET_ENCODERS)
     target_encoders = read_obj(CONTINUOUS_SCALERS)
+    fillers = read_obj(CONTINUOUS_FILLERS)
 
     # Data
     df = pd.read_csv(PRED_CSV)
+    
+    # Store the encounter ids, before removing them for training
+    arr = df['encounter_id']
+    
+    # Remove features not marked for training
     df = df[binary_cols + categorical_cols + continuous_cols + [target_col]]
 
     # Model
@@ -81,7 +88,7 @@ def main(input_filepath, inference_filepath, output_filepath):
     df[target_col] = df[target_col].astype('str').astype('category')
 
     logger.info('filling')
-    df[continuous_cols] = df[continuous_cols].fillna(0)
+    df, _ = fill(df, continuous_cols, fillers)
 
     logger.info('normalizing')
     df, _ = normalize(df, continuous_cols, scalers)
@@ -104,7 +111,7 @@ def main(input_filepath, inference_filepath, output_filepath):
     y = pd.DataFrame(y_proba_death, columns=['hospital_death']).astype('float32')
     
     logger.info('persisting predictions')
-    arr = scalers['encounter_id'].inverse_transform(X['encounter_id'])
+    #arr = scalers['encounter_id'].inverse_transform(X['encounter_id'])
     X_encounter_id = round(pd.DataFrame(arr, columns=['encounter_id'])) # round for numerical errs
     X_encounter_id = X_encounter_id.astype('int32')
 
@@ -115,6 +122,18 @@ def read_obj(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
     return None
+
+def fill(df, cols, fillers=None):
+    if None is fillers:
+        fillers = dict()
+    for col in cols:
+        if col not in fillers:
+            fillers[col] = df[col].dropna().median()
+            
+        df[f'{col}_na'] = pd.isnull(df[col])
+        df[col] = df[col].fillna(fillers[col])
+    
+    return df, fillers
 
 def normalize(df, cols, scalers=None):
     if None is scalers:

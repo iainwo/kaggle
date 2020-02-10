@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 import bisect
 import numpy as np
+from itertools import combinations
 
 
 @click.command()
@@ -51,6 +52,7 @@ def main(input_filepath, output_filepath):
     CATEGORICAL_ENCODERS = Path.cwd().joinpath(output_filepath).joinpath('categorical-encoders.pickle')
     TARGET_ENCODERS = Path.cwd().joinpath(output_filepath).joinpath('target-encoders.pickle')
     CONTINUOUS_SCALERS = Path.cwd().joinpath(output_filepath).joinpath('continuous-scalers.pickle')
+    CONTINUOUS_FILLERS = Path.cwd().joinpath(output_filepath).joinpath('continuous-fillers.pickle')
     
     logger.info('reading in data')
     binary_cols = read_obj(BINARY_COLS)
@@ -61,6 +63,58 @@ def main(input_filepath, output_filepath):
     train = pd.read_csv(TRAIN_CSV)
     val = pd.read_csv(VAL_CSV)
     test = pd.read_csv(TEST_CSV)
+    
+    logger.info('synthesizing pairs')
+    pair_cols = [
+        'ethnicity',
+        'gender',
+        'hospital_admit_source',
+        'icu_admit_source',
+        'icu_stay_type',
+        'icu_type',
+        'apache_3j_bodysystem',
+        'apache_2_bodysystem'
+    ]
+    cmbs = list(combinations(pair_cols, 2))
+    combo_cols = list()
+    for cols in cmbs:
+        col_name = f'paired_{"_".join(cols)}'
+        combo_cols.append(col_name)
+        train[col_name] = concat_columns(train, cols)
+        val[col_name] = concat_columns(val, cols)
+        test[col_name] = concat_columns(test, cols)
+    categorical_cols.extend(combo_cols)
+    
+    # aggregate icu
+    train['hospital_admit_source_is_icu'] = train['hospital_admit_source'].apply(
+            lambda x: 
+                'True' if x in [
+                    'Other ICU', 
+                    'ICU to SDU',
+                    'ICU'
+                ] else 'False')
+    val['hospital_admit_source_is_icu'] = val['hospital_admit_source'].apply(
+            lambda x: 
+                'True' if x in [
+                    'Other ICU', 
+                    'ICU to SDU',
+                    'ICU'
+                ] else 'False')
+    test['hospital_admit_source_is_icu'] = test['hospital_admit_source'].apply(
+            lambda x: 
+                'True' if x in [
+                    'Other ICU', 
+                    'ICU to SDU',
+                    'ICU'
+                ] else 'False')
+    categorical_cols.append('hospital_admit_source_is_icu')
+    
+    # aggregate cardiac
+    common_cols = ['CTICU', 'CCU-CTICU', 'Cardiac ICU', 'CSICU']
+    train['hospital_admit_source_is_cardiac'] = train['icu_type'].apply(lambda x: True if x in common_cols else False)
+    val['hospital_admit_source_is_cardiac'] = val['icu_type'].apply(lambda x: True if x in common_cols else False)
+    test['hospital_admit_source_is_cardiac'] = test['icu_type'].apply(lambda x: True if x in common_cols else False)
+    categorical_cols.append('hospital_admit_source_is_cardiac')
     
     logger.info('typifying...')
     # continuous
@@ -83,10 +137,27 @@ def main(input_filepath, output_filepath):
     val[target_col] = val[target_col].astype('str').astype('category')
     test[target_col] = test[target_col].astype('str').astype('category')
     
-    logger.info('filling...')
-    train[continuous_cols] = train[continuous_cols].fillna(0)
-    val[continuous_cols] = val[continuous_cols].fillna(0)
-    test[continuous_cols] = test[continuous_cols].fillna(0)
+    logger.info("dropping")
+    train = train.dropna(how='all')
+    val = val.dropna(how='all')
+    test = test.dropna(how='all')
+    
+    logger.info('dropping confounding features')
+    confounding_cols = ['apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob']
+
+    # remove confounding vars - biases and undue variance
+    for x in confounding_cols:
+        continuous_cols.remove(x)
+    
+    train = train[[target_col] + continuous_cols + categorical_cols + binary_cols]
+    val = val[[target_col] + continuous_cols + categorical_cols + binary_cols]
+    test = test[[target_col] + continuous_cols + categorical_cols + binary_cols]
+      
+    logger.info('filling')
+    train, fillers = fill(train, continuous_cols)
+    val, _ = fill(val, continuous_cols, fillers)
+    test, _ = fill(test, continuous_cols, fillers)
+    categorical_cols.extend([f'{x}_na' for x in continuous_cols])
     
     logger.info('normalizing')
     train, scalers = normalize(train, continuous_cols)
@@ -94,6 +165,12 @@ def main(input_filepath, output_filepath):
     test, _ = normalize(test, continuous_cols, scalers)
     
     logger.info('label encoding categoricals')
+    
+    # to handle converting fill_nas from bool to str
+    train[categorical_cols] = train[categorical_cols].astype('str').astype('category')
+    val[categorical_cols] = val[categorical_cols].astype('str').astype('category')
+    test[categorical_cols] = test[categorical_cols].astype('str').astype('category')
+    
     train, label_encoders = labelencode(train, categorical_cols)
     val, _ = labelencode(val, categorical_cols, label_encoders)
     test, _ = labelencode(test, categorical_cols, label_encoders)
@@ -109,6 +186,10 @@ def main(input_filepath, output_filepath):
     val, _ = labelencode(val, binary_cols, ohe_encoders)
     test, _ = labelencode(test, binary_cols, ohe_encoders)
 
+    logger.info('dropping identifiers from list cols')
+    for col in ['encounter_id', 'hospital_id', 'patient_id']:
+        continuous_cols.remove(col)
+
     logger.info('persisting data')    
     # cols
     pickle_obj(BINARY_COLS_OUT, binary_cols)
@@ -121,6 +202,7 @@ def main(input_filepath, output_filepath):
     pickle_obj(CATEGORICAL_ENCODERS, label_encoders)
     pickle_obj(TARGET_ENCODERS, target_encoders)
     pickle_obj(CONTINUOUS_SCALERS, scalers)
+    pickle_obj(CONTINUOUS_FILLERS, fillers)
 
     # data
     train.to_csv(TRAIN_CSV_OUT, index=False)
@@ -131,6 +213,55 @@ def read_obj(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
     return None
+
+def concat_columns(df, columns):
+    value = df[columns[0]].astype(str) + ' '
+    for col in columns[1:]:
+        value += df[col].astype(str) + ' '
+    return value
+
+def fill(df, cols, fillers=None):
+    if None is fillers:
+        fillers = dict()
+        
+        for col in cols:
+            logging.info(f'generating fill col {col}')
+            for hospital_id in df['hospital_id'].unique():
+
+                subset = df[df['hospital_id'] == hospital_id]
+                hospital_col_key = f'{col}_{hospital_id}'
+
+                if hospital_col_key not in fillers:
+                    fillers[hospital_col_key] = subset[col].dropna().median()
+            
+            fillers[col] = df[col].dropna().median()
+    
+    for col in cols:
+        logging.info(f'fillling {col}')
+        for hospital_id in df['hospital_id'].unique():
+            logging.info(f'filling {col} - {hospital_id}')
+            subset = df[df['hospital_id'] == hospital_id]
+            hospital_col_key = f'{col}_{hospital_id}'
+            
+            if hospital_col_key in fillers:
+                df.loc[df['hospital_id'] == hospital_id, col] = subset[col].fillna(fillers[hospital_col_key])
+            else:
+                df.loc[df['hospital_id'] == hospital_id, col] = subset[col].fillna(fillers[col])
+            
+            df.loc[df['hospital_id'] == hospital_id, f'{col}_na'] = pd.isnull(subset[col])
+    
+    return df, fillers
+# def fill(df, cols, fillers=None):
+#     if None is fillers:
+#         fillers = dict()
+#     for col in cols:
+#         if col not in fillers:
+#             fillers[col] = df[col].dropna().median()
+            
+#         df[f'{col}_na'] = pd.isnull(df[col])
+#         df[col] = df[col].fillna(fillers[col])
+    
+#     return df, fillers
 
 def normalize(df, cols, scalers=None):
     if None is scalers:

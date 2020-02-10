@@ -6,6 +6,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+tags
 .Python
 env/
 build/
@@ -87,3 +88,7 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Datascience
+notebooks/catboost_info/
+catboost_info/

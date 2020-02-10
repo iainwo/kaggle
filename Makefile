@@ -44,6 +44,10 @@ model: requirements
 predictions: requirements
 	$(PYTHON_INTERPRETER) wids-datathon-2020/models/predict_model.py models/ data/raw/ data/predictions
 
+## Generate visuals for feature EDA
+eda: requirements
+	$(PYTHON_INTERPRETER) wids-datathon-2020/visualization/visualize.py
+
 ## Delete all compiled Python files
 clean:
 	find . -type f -name "*.py[co]" -delete

@@ -15,6 +15,8 @@ $ make requirements_dev # to install dev reqs
 # 2. feature engineer - normalizes, label encodes, fills, feature engineers
 $ make data
 
+$ make eda # generate eda analysis (reports/eda/)
+
 $ make model # output to ./models/
 
 $ make predictions # output to ./data/predictions/

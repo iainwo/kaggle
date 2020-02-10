@@ -8,6 +8,7 @@ import zipfile
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import pickle
+import numpy as np
 
 
 @click.command()
@@ -52,6 +53,10 @@ def main(input_filepath, output_filepath, external_filepath):
     categorical_cols.remove('icu_admit_type')
     continuous_cols.remove('pred')
     
+    # fix missmapped continuous cols
+    continuous_cols.extend(['bmi', 'apache_2_diagnosis', 'apache_3j_diagnosis'])
+    categorical_cols = [x for x in categorical_cols if x not in ['bmi', 'apache_2_diagnosis', 'apache_3j_diagnosis']]
+    
     logger.info(f'Target cols: {target_col}')
     logger.info(f'Continuous cols: {continuous_cols}')
     logger.info(f'Categorical cols: {categorical_cols}')
@@ -73,13 +78,31 @@ def main(input_filepath, output_filepath, external_filepath):
     
     # Splitting
     strat_cols = [target_col]
-    logger.info(f'doing test-train-split stratifying on cols: {strat_cols}')
+    logger.info(f'doing test-train-split stratifying on cols: {strat_cols} and hospital_id')
 
-    logger.info(f'forming test')
-    train, test = train_test_split(df, test_size=0.1, random_state=0, stratify=df[strat_cols])
-    
-    logger.info(f'forming train and val')
-    train, val = train_test_split(train, test_size=0.1, random_state=0, stratify=train[strat_cols])
+    strat_cols = [target_col]
+
+    train = pd.DataFrame()
+    val = pd.DataFrame()
+    test = pd.DataFrame()
+
+    for hospital_id in df['hospital_id'].unique():
+        subset = df[df['hospital_id'] == hospital_id]
+        
+        if 10 < len(subset):
+            classes, y_indices = np.unique(subset[strat_cols], return_inverse=True)
+            class_counts = np.bincount(y_indices)
+
+            if 2 > np.min(class_counts):
+                tmp_train, tmp_test = train_test_split(subset, test_size=0.1, random_state=0)
+                tmp_train, tmp_val = train_test_split(tmp_train, test_size=0.1, random_state=0)
+            else:
+                tmp_train, tmp_test = train_test_split(subset, test_size=0.1, random_state=0, stratify=subset[strat_cols])
+                tmp_train, tmp_val = train_test_split(tmp_train, test_size=0.1, random_state=0, stratify=tmp_train[strat_cols])
+
+            train = train.append(tmp_train)
+            val = val.append(tmp_val)
+            test = test.append(tmp_test)
     
     # Persist data
     train.to_csv(TRAIN_CSV_OUT, index=False)

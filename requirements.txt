@@ -15,3 +15,7 @@ sklearn
 catboost
 seaborn
 shap
+matplotlib
+plotly
+chart-studio
+missingno
