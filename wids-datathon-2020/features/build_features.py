@@ -64,7 +64,7 @@ def main(input_filepath, output_filepath):
     val = pd.read_csv(VAL_CSV)
     test = pd.read_csv(TEST_CSV)
     
-    logger.info('synthesizing pairs')
+    logger.info('synthesizing categorical pairs')
     pair_cols = [
         'ethnicity',
         'gender',
@@ -78,6 +78,27 @@ def main(input_filepath, output_filepath):
     cmbs = list(combinations(pair_cols, 2))
     combo_cols = list()
     for cols in cmbs:
+        col_name = f'paired_{"_".join(cols)}'
+        combo_cols.append(col_name)
+        train[col_name] = concat_columns(train, cols)
+        val[col_name] = concat_columns(val, cols)
+        test[col_name] = concat_columns(test, cols)
+    categorical_cols.extend(combo_cols)
+    
+    logger.info('synthesizing categorical triplets')
+    cmbs = list(combinations(pair_cols, 3))
+    combo_cols = list()
+    for cols in cmbs:
+        col_name = f'paired_{"_".join(cols)}'
+        combo_cols.append(col_name)
+        train[col_name] = concat_columns(train, cols)
+        val[col_name] = concat_columns(val, cols)
+        test[col_name] = concat_columns(test, cols)
+    categorical_cols.extend(combo_cols)
+
+    logger.info('synthesizing binary pairs')
+    combo_cols = list()
+    for cols in list(combinations(binary_cols, 2)):
         col_name = f'paired_{"_".join(cols)}'
         combo_cols.append(col_name)
         train[col_name] = concat_columns(train, cols)
@@ -109,12 +130,26 @@ def main(input_filepath, output_filepath):
                 ] else 'False')
     categorical_cols.append('hospital_admit_source_is_icu')
     
+    # aggregate ethnicity
+    common_cols = [np.nan, 'Other/Unknown']
+    train['ethnicity_is_unknown'] = train['ethnicity'].apply(lambda x: True if x in common_cols else False)
+    val['ethnicity_is_unknown'] = val['ethnicity'].apply(lambda x: True if x in common_cols else False)
+    test['ethnicity_is_unknown'] = test['ethnicity'].apply(lambda x: True if x in common_cols else False)
+    categorical_cols.append('ethnicity_is_unknown')
+    
     # aggregate cardiac
     common_cols = ['CTICU', 'CCU-CTICU', 'Cardiac ICU', 'CSICU']
-    train['hospital_admit_source_is_cardiac'] = train['icu_type'].apply(lambda x: True if x in common_cols else False)
-    val['hospital_admit_source_is_cardiac'] = val['icu_type'].apply(lambda x: True if x in common_cols else False)
-    test['hospital_admit_source_is_cardiac'] = test['icu_type'].apply(lambda x: True if x in common_cols else False)
-    categorical_cols.append('hospital_admit_source_is_cardiac')
+    train['icu_type_is_cardiac'] = train['icu_type'].apply(lambda x: True if x in common_cols else False)
+    val['icu_type_is_cardiac'] = val['icu_type'].apply(lambda x: True if x in common_cols else False)
+    test['icu_type_is_cardiac'] = test['icu_type'].apply(lambda x: True if x in common_cols else False)
+    categorical_cols.append('icu_type_is_cardiac')
+    
+    # aggregate apache_2_bodysystem
+    common_cols = ['Undefined Diagnoses', np.nan, 'Undefined diagnoses']
+    train['apache_2_bodysystem_is_undefined'] = train['apache_2_bodysystem'].apply(lambda x: True if x in common_cols else False)
+    val['apache_2_bodysystem_is_undefined'] = val['apache_2_bodysystem'].apply(lambda x: True if x in common_cols else False)
+    test['apache_2_bodysystem_is_undefined'] = test['apache_2_bodysystem'].apply(lambda x: True if x in common_cols else False)
+    categorical_cols.append('apache_2_bodysystem_is_undefined')
     
     logger.info('typifying...')
     # continuous
@@ -148,6 +183,9 @@ def main(input_filepath, output_filepath):
     # remove confounding vars - biases and undue variance
     for x in confounding_cols:
         continuous_cols.remove(x)
+    train = train.drop(columns=confounding_cols)
+    val = val.drop(columns=confounding_cols)
+    test = test.drop(columns=confounding_cols)
     
     train = train[[target_col] + continuous_cols + categorical_cols + binary_cols]
     val = val[[target_col] + continuous_cols + categorical_cols + binary_cols]
@@ -187,7 +225,7 @@ def main(input_filepath, output_filepath):
     test, _ = labelencode(test, binary_cols, ohe_encoders)
 
     logger.info('dropping identifiers from list cols')
-    for col in ['encounter_id', 'hospital_id', 'patient_id']:
+    for col in ['encounter_id', 'hospital_id', 'patient_id', 'icu_id']:
         continuous_cols.remove(col)
 
     logger.info('persisting data')    
@@ -239,7 +277,6 @@ def fill(df, cols, fillers=None):
     for col in cols:
         logging.info(f'fillling {col}')
         for hospital_id in df['hospital_id'].unique():
-            logging.info(f'filling {col} - {hospital_id}')
             subset = df[df['hospital_id'] == hospital_id]
             hospital_col_key = f'{col}_{hospital_id}'
             
