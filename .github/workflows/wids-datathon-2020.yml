@@ -35,3 +35,30 @@ jobs:
       run: |
         make test
       working-directory: ./wids-datathon-2020/
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v1
+      with:
+        name: code-coverage-report
+        path: test-results.xml
+    - name: Making data
+      run: |
+        make data
+      working-directory: ./wids-datathon-2020/
+    - name: Making model
+      run: |
+        make model
+      working-directory: ./wids-datathon-2020/
+    - name: Publishing model
+      uses: actions/upload-artifact@v1
+      with:
+        name: model
+        path: models/
+    - name: Making predictions
+      run: |
+        make predictions
+      working-directory: ./wids-datathon-2020/
+    - name: Publish predictions
+      uses: actions/upload-artifact@v1
+      with:
+        name: model
+        path: models/
