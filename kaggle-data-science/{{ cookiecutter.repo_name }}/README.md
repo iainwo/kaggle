@@ -3,6 +3,54 @@
 
 {{cookiecutter.description}}
 
+# How-to Perform Inference
+
+```bash
+$ conda create -n testenv python=3.6
+$ conda activate testenv
+$ pip install {{cookiecutter.repo_name}}
+
+$ # TODO
+
+```
+
+# How-to Develop
+
+```bash
+$ git clone https://github.com/iainwo/kaggle.git
+$ cd {{cookiecutter.repo_name}}/
+$ make create_environment
+$ conda activate {{cookiecutter.repo_name}}
+$ make requirements
+$ vim my_changes.py
+$ make data
+$ make model
+$ make predictions
+```
+
+# Other Commands
+```sh
+(my-kaggle-project) talisman-2:my-kaggle-project iainwong$ make
+Available rules:
+
+build               Build python package 
+clean               Delete all compiled Python files 
+create_environment  Set up python interpreter environment 
+data                Make Dataset 
+data_final          Make Dataset for Kaggle Submission 
+eda                 Generate visuals for feature EDA 
+lint                Lint using flake8 
+model               Make Model 
+predictions         Make Predictions 
+publish             Publish python package to PyPi 
+requirements        Install Python Dependencies 
+requirements_dev    Install Development Deps 
+sync_data_from_s3   Download Data from S3 
+sync_data_to_s3     Upload Data to S3 
+test                Run unit tests 
+test_environment    Test python environment is setup correctly 
+```
+
 Project Organization
 ------------
 

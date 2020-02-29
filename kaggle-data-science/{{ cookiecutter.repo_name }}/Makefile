@@ -34,6 +34,16 @@ clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
 
+## Build python package
+build: requirements
+	$(PYTHON_INTERPRETER) -m pip install --user --upgrade setuptools wheel
+	$(PYTHON_INTERPRETER) setup.py sdist bdist_wheel
+
+## Publish python package to PyPi
+publish:
+	$(PYTHON_INTERPRETER) -m pip install --user --upgrade twine
+	$(PYTHON_INTERPRETER) -m twine upload dist/*
+
 ## Lint using flake8
 lint:
 	flake8 src

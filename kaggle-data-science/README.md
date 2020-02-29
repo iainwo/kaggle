@@ -9,6 +9,8 @@ Modifications:
 - Added `./tests/` dir
 - Added custom `.gitignore` lines
 - Added `./data/predictions` dir
+- Added Makefile `build` target to assemble python package
+- Added Makefile `publish` target to push python package to PyPi
 
 ## How-to Use
 ``` bash
