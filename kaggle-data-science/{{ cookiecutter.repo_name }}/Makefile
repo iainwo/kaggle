@@ -40,7 +40,7 @@ lint:
 
 ## Run unit tests
 test:
-	pytest
+	py.test -v --junitxml="test-results.xml"
 
 ## Upload Data to S3
 sync_data_to_s3:

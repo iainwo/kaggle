@@ -6,6 +6,8 @@ Modifications:
 - Added kaggle library to `./{{ cookiecutter.repo_name }}/requirements.txt`
 - Added ipykernel to `./{{ cookiecutter.repo_name }}/requirements.txt`
 - Added Makefile `test` target to run unit tests
+- Added `./tests/` dir
+- Added custom `.gitignore` lines
 
 ## How-to Use
 ``` bash

@@ -87,3 +87,8 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Custom
+test-results.xml
+notebooks/catboost_info/
+catboost_info/

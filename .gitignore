@@ -92,3 +92,4 @@ target/
 # Datascience
 notebooks/catboost_info/
 catboost_info/
+test-results.xml
