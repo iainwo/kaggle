@@ -39,7 +39,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: code-coverage-report
-        path: test-results.xml
+        path: ./kaggle/wids-datathon-2020/test-results.xml
     - name: Making data
       run: |
         make data
@@ -52,7 +52,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: model
-        path: models/
+        path: ./kaggle/wids-datathon-2020/models/
     - name: Making predictions
       run: |
         make predictions
@@ -60,5 +60,5 @@ jobs:
     - name: Publish predictions
       uses: actions/upload-artifact@v1
       with:
-        name: model
-        path: models/
+        name: predictions
+        path: ./kaggle/wids-datathon-2020/data/predictions/preds.csv
