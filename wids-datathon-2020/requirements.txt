@@ -20,3 +20,4 @@ matplotlib
 plotly
 chart-studio
 missingno
+pytest

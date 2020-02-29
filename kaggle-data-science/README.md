@@ -5,6 +5,7 @@ This is a modified version of [Cookiecutter](http://drivendata.github.io/cookiec
 Modifications:
 - Added kaggle library to `./{{ cookiecutter.repo_name }}/requirements.txt`
 - Added ipykernel to `./{{ cookiecutter.repo_name }}/requirements.txt`
+- Added Makefile `test` target to run unit tests
 
 ## How-to Use
 ``` bash

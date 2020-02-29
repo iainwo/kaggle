@@ -62,6 +62,10 @@ clean:
 lint:
 	flake8 wids-datathon-2020
 
+## Run unit tests
+test:
+	pytest
+
 ## Upload Data to S3
 sync_data_to_s3:
 ifeq (default,$(PROFILE))
