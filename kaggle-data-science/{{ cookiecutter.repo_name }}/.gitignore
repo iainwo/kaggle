@@ -92,3 +92,6 @@ target/
 test-results.xml
 notebooks/catboost_info/
 catboost_info/
+data/
+models/
+reports/

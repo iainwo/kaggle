@@ -80,7 +80,8 @@ def main(is_final_model, is_semi_supervised_model, input_filepath, output_filepa
     logger.info('getting data...')
     df = pd.read_csv(DATA)
     preds = pd.read_csv(PREDICTION_DATA)
-    semi = pd.read_csv(SEMI_SUPERVISED_DATA)
+    if is_semi_supervised_model:
+        semi = pd.read_csv(SEMI_SUPERVISED_DATA)
     # prob = pd.read_csv(REGRESSIVE_PROB_DATA)
 
     # df.loc[df['encounter_id'].isin(prob['encounter_id']),

@@ -10,11 +10,11 @@ from sklearn.preprocessing import LabelEncoder
 import bisect
 import numpy as np
 from itertools import combinations
-from sklearn import decomposition
+# from sklearn import decomposition
 # from sklearn.cluster import KMeans
 # from sklearn.ensemble import RandomForestClassifier
 # from sklearn.neighbors import KNeighborsClassifier
-from catboost import CatBoostRegressor
+# from catboost import CatBoostRegressor
 
 
 @click.command()
@@ -93,138 +93,138 @@ def main(input_filepath, output_filepath):
     test = pd.read_csv(TEST_CSV)
     preds = pd.read_csv(PREDS_CSV)
 
-    model = CatBoostRegressor(random_seed=42)
+    # model = CatBoostRegressor(random_seed=42)
 
-    logger.info('imputing apache_4a_hospital_death_prob')
-    # Fit model
-    tmp = train.copy().dropna(subset=['apache_4a_hospital_death_prob']).fillna(-999)
-    tmp = tmp[tmp['apache_4a_hospital_death_prob'] >= 0]
-    X = tmp[tmp.columns.difference(['apache_4a_hospital_death_prob'])]
-    X[X.columns.difference(categorical_cols+binary_cols)
-      ] = X[X.columns.difference(categorical_cols+binary_cols)].astype('float32')
-    X[categorical_cols+binary_cols] = X[categorical_cols+binary_cols].astype('str')
-    X.pop(target_col)
-    y = tmp['apache_4a_hospital_death_prob'].astype('float32')
-    model.fit(X, y, cat_features=categorical_cols+binary_cols)
+    # logger.info('imputing apache_4a_hospital_death_prob')
+    # # Fit model
+    # tmp = train.copy().dropna(subset=['apache_4a_hospital_death_prob']).fillna(-999)
+    # tmp = tmp[tmp['apache_4a_hospital_death_prob'] >= 0]
+    # X = tmp[tmp.columns.difference(['apache_4a_hospital_death_prob'])]
+    # X[X.columns.difference(categorical_cols+binary_cols)
+    #   ] = X[X.columns.difference(categorical_cols+binary_cols)].astype('float32')
+    # X[categorical_cols+binary_cols] = X[categorical_cols+binary_cols].astype('str')
+    # X.pop(target_col)
+    # y = tmp['apache_4a_hospital_death_prob'].astype('float32')
+    # model.fit(X, y, cat_features=categorical_cols+binary_cols)
 
-    tmp2 = train[(0 > train['apache_4a_hospital_death_prob']) | (
-        np.isnan(train['apache_4a_hospital_death_prob']))].copy().fillna(-999)
-    X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
-    X2[X2.columns.difference(categorical_cols+binary_cols)
-       ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
-    X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
-    X2.pop(target_col)
-    # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
-    death_prob_preds = pd.DataFrame(model.predict(X2), columns=['apache_4a_hospital_death_prob'])
-    samp = pd.concat(
-        [
-            death_prob_preds.reset_index(drop=True),
-            pd.DataFrame(tmp2['hospital_death'], columns=['hospital_death']).reset_index(drop=True)
-        ], axis=1)
-    samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
-        X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
-    train.loc[
-        train['encounter_id'].isin(samp['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ] = samp.loc[
-        samp['encounter_id'].isin(train['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ].values
+    # tmp2 = train[(0 > train['apache_4a_hospital_death_prob']) | (
+    #     np.isnan(train['apache_4a_hospital_death_prob']))].copy().fillna(-999)
+    # X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
+    # X2[X2.columns.difference(categorical_cols+binary_cols)
+    #    ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
+    # X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
+    # X2.pop(target_col)
+    # # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
+    # death_prob_preds = pd.DataFrame(model.predict(X2), columns=['apache_4a_hospital_death_prob'])
+    # samp = pd.concat(
+    #     [
+    #         death_prob_preds.reset_index(drop=True),
+    #         pd.DataFrame(tmp2['hospital_death'], columns=['hospital_death']).reset_index(drop=True)
+    #     ], axis=1)
+    # samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
+    #     X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
+    # train.loc[
+    #     train['encounter_id'].isin(samp['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ] = samp.loc[
+    #     samp['encounter_id'].isin(train['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ].values
 
-    tmp2 = val[(0 > val['apache_4a_hospital_death_prob']) | (
-        np.isnan(val['apache_4a_hospital_death_prob']))].copy().fillna(-999)
-    X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
-    X2[X2.columns.difference(categorical_cols+binary_cols)
-       ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
-    X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
-    X2.pop(target_col)
-    # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
-    death_prob_preds = pd.DataFrame(model.predict(X2), columns=['apache_4a_hospital_death_prob'])
-    samp = pd.concat(
-        [
-            death_prob_preds.reset_index(drop=True),
-            pd.DataFrame(tmp2['hospital_death'], columns=['hospital_death']).reset_index(drop=True)
-        ], axis=1)
-    samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
-        X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
-    val.loc[
-        val['encounter_id'].isin(samp['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ] = samp.loc[
-        samp['encounter_id'].isin(val['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ].values
+    # tmp2 = val[(0 > val['apache_4a_hospital_death_prob']) | (
+    #     np.isnan(val['apache_4a_hospital_death_prob']))].copy().fillna(-999)
+    # X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
+    # X2[X2.columns.difference(categorical_cols+binary_cols)
+    #    ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
+    # X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
+    # X2.pop(target_col)
+    # # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
+    # death_prob_preds = pd.DataFrame(model.predict(X2), columns=['apache_4a_hospital_death_prob'])
+    # samp = pd.concat(
+    #     [
+    #         death_prob_preds.reset_index(drop=True),
+    #         pd.DataFrame(tmp2['hospital_death'], columns=['hospital_death']).reset_index(drop=True)
+    #     ], axis=1)
+    # samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
+    #     X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
+    # val.loc[
+    #     val['encounter_id'].isin(samp['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ] = samp.loc[
+    #     samp['encounter_id'].isin(val['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ].values
 
-    tmp2 = test[(0 > test['apache_4a_hospital_death_prob']) | (
-        np.isnan(test['apache_4a_hospital_death_prob']))].copy().fillna(-999)
-    X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
-    X2[X2.columns.difference(categorical_cols+binary_cols)
-       ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
-    X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
-    X2.pop(target_col)
-    # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
-    death_prob_preds = pd.DataFrame(model.predict(X2), columns=['apache_4a_hospital_death_prob'])
-    samp = pd.concat(
-        [
-            death_prob_preds.reset_index(drop=True),
-            pd.DataFrame(tmp2['hospital_death'], columns=['hospital_death']).reset_index(drop=True)
-        ], axis=1)
-    samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
-        X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
-    test.loc[
-        test['encounter_id'].isin(samp['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ] = samp.loc[
-        samp['encounter_id'].isin(test['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ].values
+    # tmp2 = test[(0 > test['apache_4a_hospital_death_prob']) | (
+    #     np.isnan(test['apache_4a_hospital_death_prob']))].copy().fillna(-999)
+    # X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
+    # X2[X2.columns.difference(categorical_cols+binary_cols)
+    #    ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
+    # X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
+    # X2.pop(target_col)
+    # # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
+    # death_prob_preds = pd.DataFrame(model.predict(X2), columns=['apache_4a_hospital_death_prob'])
+    # samp = pd.concat(
+    #     [
+    #         death_prob_preds.reset_index(drop=True),
+    #         pd.DataFrame(tmp2['hospital_death'], columns=['hospital_death']).reset_index(drop=True)
+    #     ], axis=1)
+    # samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
+    #     X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
+    # test.loc[
+    #     test['encounter_id'].isin(samp['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ] = samp.loc[
+    #     samp['encounter_id'].isin(test['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ].values
 
-    tmp2 = preds[(0 > preds['apache_4a_hospital_death_prob']) | (
-        np.isnan(preds['apache_4a_hospital_death_prob']))].copy().fillna(-999)
-    X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
-    X2[X2.columns.difference(categorical_cols+binary_cols)
-       ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
-    X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
-    # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
-    death_prob_preds = pd.DataFrame(model.predict(X2[model.feature_names_]), columns=['apache_4a_hospital_death_prob'])
-    samp = death_prob_preds.reset_index(drop=True)
-    samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
-        X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
-    preds.loc[
-        preds['encounter_id'].isin(samp['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ] = samp.loc[
-        samp['encounter_id'].isin(preds['encounter_id']),
-        'apache_4a_hospital_death_prob'
-    ].values
+    # tmp2 = preds[(0 > preds['apache_4a_hospital_death_prob']) | (
+    #     np.isnan(preds['apache_4a_hospital_death_prob']))].copy().fillna(-999)
+    # X2 = tmp2[tmp2.columns.difference(['apache_4a_hospital_death_prob'])]
+    # X2[X2.columns.difference(categorical_cols+binary_cols)
+    #    ] = X2[X2.columns.difference(categorical_cols+binary_cols)].astype('float32')
+    # X2[categorical_cols+binary_cols] = X2[categorical_cols+binary_cols].astype('str')
+    # # y2 = tmp2['apache_4a_hospital_death_prob'].astype('float32')
+    # death_prob_preds = pd.DataFrame(model.predict(X2[model.feature_names_]), columns=['apache_4a_hospital_death_prob'])
+    # samp = death_prob_preds.reset_index(drop=True)
+    # samp = pd.concat([samp.reset_index(drop=True), pd.DataFrame(
+    #     X2['encounter_id'], columns=['encounter_id']).reset_index(drop=True)], axis=1)
+    # preds.loc[
+    #     preds['encounter_id'].isin(samp['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ] = samp.loc[
+    #     samp['encounter_id'].isin(preds['encounter_id']),
+    #     'apache_4a_hospital_death_prob'
+    # ].values
 
-    logger.info('forming distributional clusters')
-    pca = decomposition.PCA(n_components=4)
-    clustering_cols = [
-        'd1_spo2_min',
-        'd1_bun_min',
-        'gcs_motor_apache',
-        'd1_bun_max',
-        'd1_resprate_max',
-        'apache_3j_diagnosis',
-        'd1_heartrate_max'
-    ]
-    #  clsutering_cols = [continuous_cols]
-    cl_train = train[clustering_cols].copy().astype('float32')
-    cl_val = val[clustering_cols].copy().astype('float32')
-    cl_test = test[clustering_cols].copy().astype('float32')
-    cl_preds = preds[clustering_cols].copy().astype('float32')
+    # logger.info('forming distributional clusters')
+    # pca = decomposition.PCA(n_components=4)
+    # clustering_cols = [
+    #     'd1_spo2_min',
+    #     'd1_bun_min',
+    #     'gcs_motor_apache',
+    #     'd1_bun_max',
+    #     'd1_resprate_max',
+    #     'apache_3j_diagnosis',
+    #     'd1_heartrate_max'
+    # ]
+    # #  clsutering_cols = [continuous_cols]
+    # cl_train = train[clustering_cols].copy().astype('float32')
+    # cl_val = val[clustering_cols].copy().astype('float32')
+    # cl_test = test[clustering_cols].copy().astype('float32')
+    # cl_preds = preds[clustering_cols].copy().astype('float32')
 
-    cl_train, cluster_fillers = fill(cl_train, clustering_cols, is_demarc=False)
-    cl_val, _ = fill(cl_val, clustering_cols, cluster_fillers, is_demarc=False)
-    cl_test, _ = fill(cl_test, clustering_cols, cluster_fillers, is_demarc=False)
-    cl_preds, _ = fill(cl_preds, clustering_cols, cluster_fillers, is_demarc=False)
+    # cl_train, cluster_fillers = fill(cl_train, clustering_cols, is_demarc=False)
+    # cl_val, _ = fill(cl_val, clustering_cols, cluster_fillers, is_demarc=False)
+    # cl_test, _ = fill(cl_test, clustering_cols, cluster_fillers, is_demarc=False)
+    # cl_preds, _ = fill(cl_preds, clustering_cols, cluster_fillers, is_demarc=False)
 
-    pca.fit(cl_train)
-    cl_train = pca.transform(cl_train)
-    cl_val = pca.transform(cl_val)
-    cl_test = pca.transform(cl_test)
-    cl_preds = pca.transform(cl_preds)
+    # pca.fit(cl_train)
+    # cl_train = pca.transform(cl_train)
+    # cl_val = pca.transform(cl_val)
+    # cl_test = pca.transform(cl_test)
+    # cl_preds = pca.transform(cl_preds)
 
     # when d1_heartrate_max is -1000 and d1_platelets_min is [0, 500] -> not dead
     # when d1_wbc_min is -1000 and d1_platelets_min [250, 500] -> not dead
