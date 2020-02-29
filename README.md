@@ -6,6 +6,6 @@ Productionized solutions to kaggle problems.
 
 ## PROJECTS
 
-| __Problem__ | __Description__ | __Features__ | __Placement__ |
+| __Problem__ | __Description__ | __Placement__ | __Solution__ |
 | --- | --- | --- | --- |
-| [WiDS Datathon 2020](./wids_datathon_2020/) | The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. More info [here](https://www.kaggle.com/c/widsdatathon2020/overview). | `Batch Prediction` | 160th / 951 |
+| [WiDS Datathon 2020](./wids_datathon_2020/) | The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. | 160th / 951 | `Batch Prediction` |
