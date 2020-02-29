@@ -8,7 +8,7 @@ Productionized solutions to kaggle problems.
 
 | __Problem__ | __Description__ | __Placement__ | __Solution__ |
 | --- | --- | --- | --- |
-| [WiDS Datathon 2020](./wids_datathon_2020/) | The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. | 160th / 951 | `Batch Prediction` |
+| [WiDS Datathon 2020](./wids-datathon-2020/) | The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. | 160th / 951 | `Batch Prediction` |
 
 ## HOW-TO CREATE NEW PROJECTS
 
