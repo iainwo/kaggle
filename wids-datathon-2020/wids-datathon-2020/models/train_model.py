@@ -115,7 +115,7 @@ def main(input_filepath, output_filepath, report_filepath, figure_filepath):
         # cat_features=cat_cols,
         # one_hot_max_size=20,
         logging_level='Verbose',
-        plot=True
+        plot=False
     )
 
     y_val_preds = model.predict(X_val)
