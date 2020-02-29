@@ -91,4 +91,4 @@ Project Organization
 
 --------
 
-<p><small>Project based on the <a target="_blank" href="../kaggle-data-science/">kaggle-data-science project template</a></small></p>
+<p><small>Project based on the <a target="_blank" href="../kaggle-data-science/">kaggle-data-science</a> project template.</small></p>
