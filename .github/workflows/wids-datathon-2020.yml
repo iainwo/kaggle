@@ -1,4 +1,4 @@
-name: Python package
+name: wids-datathon-2020
 
 on: [push]
 
