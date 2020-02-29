@@ -1,7 +1,11 @@
-# kaggle
+# KAGGLE
 
-This repo contains productionized solutions to kaggle problems. 
+Productionized solutions to kaggle problems.
 
-| Index | Problem | Features | Placement | Links |
-| --- | --- | --- | --- | --- |
-| 1 | WiDS Datathon 2020 | `Batch Prediction` | 160th / 951 | [Solution](./wids_datathon_2020/), [Kaggle](https://www.kaggle.com/c/widsdatathon2020/overview) |
+![Productionized Kaggle Solutions](https://media-exp1.licdn.com/dms/image/C5612AQGmGpr38YdJLQ/article-cover_image-shrink_600_2000/0?e=1588204800&v=beta&t=f_881YG8S12TbuMdEHuXpuxAyCLrtaVJxgLxY06aImU)
+
+## PROJECTS
+
+| __Problem__ | __Description__ | __Features__ | __Placement__ |
+| --- | --- | --- | --- |
+| [WiDS Datathon 2020](./wids_datathon_2020/) | The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. More info [here](https://www.kaggle.com/c/widsdatathon2020/overview). | `Batch Prediction` | 160th / 951 |
