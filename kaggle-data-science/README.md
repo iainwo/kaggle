@@ -2,7 +2,7 @@
 
 This is a modified version of [Cookiecutter](http://drivendata.github.io/cookiecutter-data-science/). This has been altered for Kaggle tasks.
 
-Moddifications:
+Modifications:
 - Added kaggle library to `./{{ cookiecutter.repo_name }}/requirements.txt`
 
 ## How-to Use
@@ -12,7 +12,7 @@ $ cd kaggle/
 $ cookiecutter kaggle-data-science # interactive script to generate project
 ```
 
-### The resulting directory structure
+## Resulting Directory Structure
 ------------
 
 The directory structure of your new project looks like this: 
@@ -62,13 +62,3 @@ The directory structure of your new project looks like this:
 │
 └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
 ```
-
-### Installing development requirements
-------------
-
-    pip install -r requirements.txt
-
-### Running the tests
-------------
-
-    py.test tests
