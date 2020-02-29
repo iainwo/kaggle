@@ -8,6 +8,7 @@ Modifications:
 - Added Makefile `test` target to run unit tests
 - Added `./tests/` dir
 - Added custom `.gitignore` lines
+- Added `./data/predictions` dir
 
 ## How-to Use
 ``` bash

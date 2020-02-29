@@ -92,6 +92,7 @@ target/
 test-results.xml
 notebooks/catboost_info/
 catboost_info/
-data/
+data/**/*.csv
+data/**/*.pickle
 models/
 reports/
