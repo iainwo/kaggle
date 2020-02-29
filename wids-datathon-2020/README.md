@@ -6,30 +6,26 @@ The challenge is to create a model that uses data from the first 24 hours of int
 # How to use
 
 ```bash
+$ git clone https://github.com/iainwo/kaggle.git
+$ cd wids-datathon-2020/
 $ make create_environment
 $ conda activate wids_datathon_2020
-$ make requirements # will also install pip env to ipykernel for jupyterlab/hub
-$ make requirements_dev # to install dev reqs
-
-# 1. preprocess data - unzips the data/external into data/raw, then creates train-test-split into data/interim
-# 2. feature engineer - normalizes, label encodes, fills, feature engineers
+$ make requirements
 $ make data
-
-$ make eda # generate eda analysis (reports/eda/)
-
-$ make model # output to ./models/
-
-$ make predictions # output to ./data/predictions/
+$ make model
+$ make predictions
 ```
 
 # Other Commands
 ```sh
-(wids_datathon_2020) iainwong@talisman-2:Development/wids_datathon_2020 [master●] $ make                                                                                
+(wids_datathon_2020) talisman-2:wids-datathon-2020 iainwong$ make
 Available rules:
 
 clean               Delete all compiled Python files 
 create_environment  Set up python interpreter environment 
 data                Make Dataset 
+data_final          Make Dataset for Kaggle Submission 
+eda                 Generate visuals for feature EDA 
 lint                Lint using flake8 
 model               Make Model 
 predictions         Make Predictions 
@@ -37,6 +33,7 @@ requirements        Install Python Dependencies
 requirements_dev    Install Development Deps 
 sync_data_from_s3   Download Data from S3 
 sync_data_to_s3     Upload Data to S3 
+test                Run unit tests 
 test_environment    Test python environment is setup correctly 
 ```
 
