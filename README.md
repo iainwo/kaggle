@@ -17,9 +17,12 @@ This is a modified version of [Cookiecutter](https://github.com/drivendata/cooki
 Alterations have been made for Kaggle specific tasks.
 
 ```sh
+$ git clone https://github.com/iainwo/kaggle.git
+$ cd kaggle/
 $ pip install cookiecutter
-$ cookiecutter kaggle-data-science # run-through the setup
-$ cd ./$MY_NEW_PROJ_NAME
-$ make create_environment # create project conda env
-$ make requirements # install python libs
+$ cookiecutter kaggle-data-science
+$ cd ./$NEW_COOKIECUTTER_PROJECT
+$ make create_environment
+$ conda activate $NEW_COOKIECUTTER_PROJECT
+$ make requirements
 ```
