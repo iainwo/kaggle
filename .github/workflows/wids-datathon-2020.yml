@@ -5,10 +5,12 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    name: Build on node ${{ matrix.python-version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -35,6 +37,15 @@ jobs:
       run: |
         make test
       working-directory: ./wids-datathon-2020/
+    - name: Build Distribution
+      run: |
+        make build
+      working-directory: ./wids-datathon-2020/
+    - name: Archive Distribution
+      uses: actions/upload-artifact@v1
+      with:
+        name: dist
+        path: ./wids-datathon-2020/dist/
     - name: Archive code coverage results
       uses: actions/upload-artifact@v1
       with:
@@ -62,3 +73,8 @@ jobs:
       with:
         name: predictions
         path: ./wids-datathon-2020/data/predictions/preds.csv
+    - name: Publish Distribution
+      run: |
+        make publish
+      working-directory: ./wids-datathon-2020/
+      if: github.ref == 'master'
