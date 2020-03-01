@@ -17,86 +17,40 @@ import json
 
 
 @click.command()
-@click.argument('input_filepath', type=click.Path(exists=True), default='data/processed/')
+@click.argument('train_filepath', type=click.Path(), default='data/processed/training_v2_train_encoded.feather')
+@click.argument('val_filepath', type=click.Path(), default='data/processed/training_v2_val_encoded.feather')
+@click.argument('test_filepath', type=click.Path(), default='data/processed/training_v2_test_encoded.feather')
 @click.argument('output_filepath', type=click.Path(), default='models/')
 @click.argument('report_filepath', type=click.Path(), default='reports/')
 @click.argument('figure_filepath', type=click.Path(), default='reports/figures/')
-def main(input_filepath, output_filepath, report_filepath, figure_filepath):
+def main(train_filepath, val_filepath, test_filepath, output_filepath, report_filepath, figure_filepath):
     """ Runs modelling scripts to turn preprocessed data from (../processed) into
         to a model (../models)
     """
     logger = logging.getLogger(__name__)
+    target_col = 'hospital_death'
 
-    INPUT_DIR = Path.cwd().joinpath(input_filepath)
-    logger.info(f'modelling with data in {INPUT_DIR.name}')
-
-    logger.info('loading envs')
-
-    # cols
-    BINARY_COLS = Path.cwd().joinpath(input_filepath).joinpath('binary-cols.pickle')
-    CATEGORICAL_COLS = Path.cwd().joinpath(input_filepath).joinpath('categorical-cols.pickle')
-    CONTINUOUS_COLS = Path.cwd().joinpath(input_filepath).joinpath('continuous-cols.pickle')
-    TARGET_COL = Path.cwd().joinpath(input_filepath).joinpath('target-col.pickle')
-
-    BINARY_COLS_OUT = Path.cwd().joinpath(output_filepath).joinpath('binary-cols.pickle')
-    CATEGORICAL_COLS_OUT = Path.cwd().joinpath(output_filepath).joinpath('categorical-cols.pickle')
-    CONTINUOUS_COLS_OUT = Path.cwd().joinpath(output_filepath).joinpath('continuous-cols.pickle')
-    TARGET_COL_OUT = Path.cwd().joinpath(output_filepath).joinpath('target-col.pickle')
-
-    COL_ORDER_OUT = Path.cwd().joinpath(output_filepath).joinpath('col-order.pickle')
-
-    # data
-    TRAIN_CSV = Path.cwd().joinpath(input_filepath).joinpath('train.csv')
-    VAL_CSV = Path.cwd().joinpath(input_filepath).joinpath('val.csv')
-    TEST_CSV = Path.cwd().joinpath(input_filepath).joinpath('test.csv')
-
-    # metadata
-    BINARY_ENCODERS = Path.cwd().joinpath(input_filepath).joinpath('binary-encoders.pickle')
-    CATEGORICAL_ENCODERS = Path.cwd().joinpath(input_filepath).joinpath('categorical-encoders.pickle')
-    TARGET_ENCODERS = Path.cwd().joinpath(input_filepath).joinpath('target-encoders.pickle')
-    CONTINUOUS_SCALERS = Path.cwd().joinpath(input_filepath).joinpath('continuous-scalers.pickle')
-    CONTINUOUS_FILLERS = Path.cwd().joinpath(input_filepath).joinpath('continuous-fillers.pickle')
-
-    BINARY_ENCODERS_OUT = Path.cwd().joinpath(output_filepath).joinpath('binary-encoders.pickle')
-    CATEGORICAL_ENCODERS_OUT = Path.cwd().joinpath(output_filepath).joinpath('categorical-encoders.pickle')
-    TARGET_ENCODERS_OUT = Path.cwd().joinpath(output_filepath).joinpath('target-encoders.pickle')
-    CONTINUOUS_SCALERS_OUT = Path.cwd().joinpath(output_filepath).joinpath('continuous-scalers.pickle')
-    CONTINUOUS_FILLERS_OUT = Path.cwd().joinpath(output_filepath).joinpath('continuous-fillers.pickle')
-
-    # model
-    MODEL = Path.cwd().joinpath(output_filepath).joinpath('catboost_model.dump')
-
-    # model results
-    VAL_RESULTS = Path.cwd().joinpath(output_filepath).joinpath('val-results.txt')
-    TEST_RESULTS = Path.cwd().joinpath(output_filepath).joinpath('test-results.txt')
-
-    logger.info('loading data')
-
-    # Cols
-    binary_cols = read_obj(BINARY_COLS)
-    categorical_cols = read_obj(CATEGORICAL_COLS)
-    continuous_cols = read_obj(CONTINUOUS_COLS)
-    target_col = read_obj(TARGET_COL)
-
-    # Metadata
-    ohe_encoders = read_obj(BINARY_ENCODERS)
-    label_encoders = read_obj(CATEGORICAL_ENCODERS)
-    scalers = read_obj(TARGET_ENCODERS)
-    target_encoders = read_obj(CONTINUOUS_SCALERS)
-    fillers = read_obj(CONTINUOUS_FILLERS)
-
-    # Data
-    X_train = pd.read_csv(TRAIN_CSV)
-    X_val = pd.read_csv(VAL_CSV)
-    X_test = pd.read_csv(TEST_CSV)
-
-    X_train = X_train[binary_cols + categorical_cols + continuous_cols + [target_col]]
-    X_val = X_val[binary_cols + categorical_cols + continuous_cols + [target_col]]
-    X_test = X_test[binary_cols + categorical_cols + continuous_cols + [target_col]]
-
+    logger.info(f'loading train data in {train_filepath}')
+    X_train = pd.read_feather(Path.cwd().joinpath(train_filepath))
     y_train = X_train.pop(target_col)
+
+    logger.info(f'loading val data in {val_filepath}')
+    X_val = pd.read_feather(Path.cwd().joinpath(val_filepath))
     y_val = X_val.pop(target_col)
+
+    logger.info(f'loading test data in {test_filepath}')
+    X_test = pd.read_feather(Path.cwd().joinpath(test_filepath))
     y_test = X_test.pop(target_col)
+
+    metadata_cols = ['encounter_id']
+
+    categorical_cols = X_train.select_dtypes(include='category').columns
+    categorical_cols = [x for x in categorical_cols if x not in metadata_cols]
+    logger.info(f'using categorical cols: {categorical_cols}')
+
+    numerical_cols = X_train.select_dtypes(include='number').columns
+    numerical_cols = [x for x in numerical_cols if x not in metadata_cols]
+    logger.info(f'using numerical cols: {numerical_cols}')
 
     logger.info('modelling')
     model_args = {
@@ -106,14 +60,11 @@ def main(input_filepath, output_filepath, report_filepath, figure_filepath):
         'logging_level': 'Silent',
         'use_best_model': True
     }
-    model = CatBoostClassifier(**model_args)
 
-    cat_cols = binary_cols + categorical_cols
+    model = CatBoostClassifier(**model_args)
     model.fit(
-        Pool(X_train, y_train, cat_features=cat_cols),
-        eval_set=Pool(X_val, y_val, cat_features=cat_cols),
-        # cat_features=cat_cols,
-        # one_hot_max_size=20,
+        Pool(X_train, y_train, cat_features=categorical_cols),
+        eval_set=Pool(X_val, y_val, cat_features=categorical_cols),
         logging_level='Verbose',
         plot=False
     )
@@ -122,7 +73,6 @@ def main(input_filepath, output_filepath, report_filepath, figure_filepath):
     y_val_proba = model.predict_proba(X_val)
     y_val_proba_death = y_val_proba[:, 1]
     val_results = results(y_val, y_val_preds, y_val_proba_death)
-    # pprint.pprint(val_results)
     logger.info(f'val results: {val_results}')
 
     y_test_preds = model.predict(X_test)
@@ -134,8 +84,8 @@ def main(input_filepath, output_filepath, report_filepath, figure_filepath):
     logger.info('generating feature importances')
     fi_args = {
         'model': model,
-        'cat_cols': cat_cols,
-        'continuous_cols': continuous_cols,
+        'cat_cols': categorical_cols,
+        'continuous_cols': numerical_cols,
         'figure_filepath': figure_filepath,
         'report_filepath': report_filepath,
         'output_filepath': output_filepath
@@ -159,24 +109,10 @@ def main(input_filepath, output_filepath, report_filepath, figure_filepath):
     calc_feature_importances(**fi_args)
 
     logger.info('dumping data and saving model')
-    dump_results(VAL_RESULTS, val_results)
-    dump_results(TEST_RESULTS, test_results)
+    dump_results(Path.cwd().joinpath(report_filepath).joinpath('val-results.txt'), val_results)
+    dump_results(Path.cwd().joinpath(report_filepath).joinpath('test-results.txt'), test_results)
 
-    # cols
-    pickle_obj(BINARY_COLS_OUT, binary_cols)
-    pickle_obj(CATEGORICAL_COLS_OUT, categorical_cols)
-    pickle_obj(CONTINUOUS_COLS_OUT, continuous_cols)
-    pickle_obj(TARGET_COL_OUT, target_col)
-    pickle_obj(COL_ORDER_OUT, list(X_train.columns))
-
-    # metadata
-    pickle_obj(BINARY_ENCODERS_OUT, ohe_encoders)
-    pickle_obj(CATEGORICAL_ENCODERS_OUT, label_encoders)
-    pickle_obj(TARGET_ENCODERS_OUT, target_encoders)
-    pickle_obj(CONTINUOUS_SCALERS_OUT, scalers)
-    pickle_obj(CONTINUOUS_FILLERS_OUT, fillers)
-
-    model.save_model(str(MODEL))
+    model.save_model(str(Path.cwd().joinpath(output_filepath).joinpath('model.dump')))
 
 
 def read_obj(path):

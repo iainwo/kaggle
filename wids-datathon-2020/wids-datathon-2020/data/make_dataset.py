@@ -3,197 +3,49 @@ import click
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
-
-import zipfile
 import pandas as pd
-from sklearn.model_selection import train_test_split
-import pickle
-import numpy as np
 
 
 @click.command()
-@click.option('--is-final-model', is_flag=True)
-@click.option('--is-semi-supervised-model', is_flag=True)
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-@click.argument('external_filepath', type=click.Path(exists=True), default='data/external/')
-def main(is_final_model, is_semi_supervised_model, input_filepath, output_filepath, external_filepath):
-    """ Runs data processing scripts to turn raw data from (../raw) into
-        cleaned data ready to be analyzed (saved in ../interim).
+@click.argument('input_csv_filepath', type=click.Path(exists=True))
+@click.argument('output_dirpath', type=click.Path(exists=True), default='data/external/')
+def main(input_csv_filepath, output_dirpath):
+    """ Runs data processing scripts to transform raw data from (../raw) into
+        cleaned and data-defacto view ready to be analyzed/feature-engineered/encoded
+        (saved in ../interim).
     """
     logger = logging.getLogger(__name__)
-    logger.info('making final data set from raw data')
+    logger.info(f'making cleaned dataset from {input_csv_filepath}')
 
-    INPUT_FILEPATH = Path.cwd().joinpath(input_filepath)
-    DATASET = Path.cwd().joinpath(external_filepath).joinpath('widsdatathon2020.zip')
-
-    TRAIN_CSV_OUT = Path.cwd().joinpath(output_filepath).joinpath('train.csv')
-    VAL_CSV_OUT = Path.cwd().joinpath(output_filepath).joinpath('val.csv')
-    TEST_CSV_OUT = Path.cwd().joinpath(output_filepath).joinpath('test.csv')
-    PREDS_CSV_OUT = Path.cwd().joinpath(output_filepath).joinpath('preds.csv')
-
-    DATADICT_FILEPATH = Path.cwd().joinpath(
-        input_filepath).joinpath('WiDS Datathon 2020 Dictionary.csv')
-    DATA = Path.cwd().joinpath(input_filepath).joinpath('training_v2.csv')
-    PREDICTION_DATA = Path.cwd().joinpath(input_filepath).joinpath('unlabeled.csv')
-    SEMI_SUPERVISED_DATA = Path.cwd().joinpath(
-        input_filepath).joinpath('semi-supervised.csv')
-    # REGRESSIVE_PROB_DATA = Path.cwd().joinpath(input_filepath).joinpath('regressive_death_prob.csv')
-
-    with zipfile.ZipFile(DATASET, 'r') as zip_ref:
-        zip_ref.extractall(INPUT_FILEPATH)
+    # Get data
+    logger.info('getting data...')
+    df = pd.read_csv(Path.cwd().joinpath(input_csv_filepath))
 
     # Get Col Types
-    logger.info('getting col types...')
-    datadict = pd.read_csv(DATADICT_FILEPATH)
-
-    continuous_cols = list(
-        list(datadict[datadict['Data Type'] == 'integer']
-             ['Variable Name'].unique())
-        + list(datadict[datadict['Data Type'] == 'numeric']
-               ['Variable Name'].unique())
-    )
-    categorical_cols = list(
-        datadict[datadict['Data Type'] == 'string']['Variable Name'].unique())
-    binary_cols = list(
-        datadict[datadict['Data Type'] == 'binary']['Variable Name'].unique())
-
+    continuous_cols = ['encounter_id', 'hospital_id', 'patient_id', 'icu_id', 'gcs_eyes_apache', 'gcs_motor_apache', 'gcs_verbal_apache', 'age', 'height', 'pre_icu_los_days', 'weight', 'albumin_apache', 'bilirubin_apache', 'bun_apache', 'creatinine_apache', 'fio2_apache', 'glucose_apache', 'heart_rate_apache', 'hematocrit_apache', 'map_apache', 'paco2_apache', 'paco2_for_ph_apache', 'pao2_apache', 'ph_apache', 'resprate_apache', 'sodium_apache', 'temp_apache', 'urineoutput_apache', 'wbc_apache', 'd1_diasbp_invasive_max', 'd1_diasbp_invasive_min', 'd1_diasbp_max', 'd1_diasbp_min', 'd1_diasbp_noninvasive_max', 'd1_diasbp_noninvasive_min', 'd1_heartrate_max', 'd1_heartrate_min', 'd1_mbp_invasive_max', 'd1_mbp_invasive_min', 'd1_mbp_max', 'd1_mbp_min', 'd1_mbp_noninvasive_max', 'd1_mbp_noninvasive_min', 'd1_resprate_max', 'd1_resprate_min', 'd1_spo2_max', 'd1_spo2_min', 'd1_sysbp_invasive_max', 'd1_sysbp_invasive_min', 'd1_sysbp_max', 'd1_sysbp_min', 'd1_sysbp_noninvasive_max', 'd1_sysbp_noninvasive_min', 'd1_temp_max', 'd1_temp_min', 'h1_diasbp_invasive_max', 'h1_diasbp_invasive_min', 'h1_diasbp_max', 'h1_diasbp_min', 'h1_diasbp_noninvasive_max', 'h1_diasbp_noninvasive_min', 'h1_heartrate_max', 'h1_heartrate_min', 'h1_mbp_invasive_max', 'h1_mbp_invasive_min', 'h1_mbp_max', 'h1_mbp_min', 'h1_mbp_noninvasive_max', 'h1_mbp_noninvasive_min', 'h1_resprate_max', 'h1_resprate_min', 'h1_spo2_max', 'h1_spo2_min', 'h1_sysbp_invasive_max', 'h1_sysbp_invasive_min', 'h1_sysbp_max', 'h1_sysbp_min', 'h1_sysbp_noninvasive_max', 'h1_sysbp_noninvasive_min', 'h1_temp_max', 'h1_temp_min', 'd1_albumin_max', 'd1_albumin_min', 'd1_bilirubin_max', 'd1_bilirubin_min', 'd1_bun_max', 'd1_bun_min', 'd1_calcium_max', 'd1_calcium_min', 'd1_creatinine_max', 'd1_creatinine_min', 'd1_glucose_max', 'd1_glucose_min', 'd1_hco3_max', 'd1_hco3_min', 'd1_hemaglobin_max', 'd1_hemaglobin_min', 'd1_hematocrit_max', 'd1_hematocrit_min', 'd1_inr_max', 'd1_inr_min', 'd1_lactate_max', 'd1_lactate_min', 'd1_platelets_max', 'd1_platelets_min', 'd1_potassium_max', 'd1_potassium_min', 'd1_sodium_max', 'd1_sodium_min', 'd1_wbc_max', 'd1_wbc_min', 'h1_albumin_max', 'h1_albumin_min', 'h1_bilirubin_max', 'h1_bilirubin_min', 'h1_bun_max', 'h1_bun_min', 'h1_calcium_max', 'h1_calcium_min', 'h1_creatinine_max', 'h1_creatinine_min', 'h1_glucose_max', 'h1_glucose_min', 'h1_hco3_max', 'h1_hco3_min', 'h1_hemaglobin_max', 'h1_hemaglobin_min', 'h1_hematocrit_max', 'h1_hematocrit_min', 'h1_inr_max', 'h1_inr_min', 'h1_lactate_max', 'h1_lactate_min', 'h1_platelets_max', 'h1_platelets_min', 'h1_potassium_max', 'h1_potassium_min', 'h1_sodium_max', 'h1_sodium_min', 'h1_wbc_max', 'h1_wbc_min', 'd1_arterial_pco2_max', 'd1_arterial_pco2_min', 'd1_arterial_ph_max', 'd1_arterial_ph_min', 'd1_arterial_po2_max', 'd1_arterial_po2_min', 'd1_pao2fio2ratio_max', 'd1_pao2fio2ratio_min', 'h1_arterial_pco2_max', 'h1_arterial_pco2_min', 'h1_arterial_ph_max', 'h1_arterial_ph_min', 'h1_arterial_po2_max', 'h1_arterial_po2_min', 'h1_pao2fio2ratio_max', 'h1_pao2fio2ratio_min', 'apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob', 'bmi', 'apache_2_diagnosis', 'apache_3j_diagnosis']  # noqa
+    categorical_cols = ['ethnicity', 'gender', 'hospital_admit_source', 'icu_admit_source', 'icu_stay_type', 'icu_type', 'apache_3j_bodysystem', 'apache_2_bodysystem']  # noqa
+    binary_cols = ['elective_surgery', 'readmission_status', 'apache_post_operative', 'arf_apache', 'gcs_unable_apache', 'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus', 'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']  # noqa
     target_col = 'hospital_death'
-    binary_cols.remove(target_col)
-
-    # fix datadict variable names
-    categorical_cols.remove('icu_admit_type')
-    continuous_cols.remove('pred')
-
-    # fix missmapped continuous cols
-    continuous_cols.extend(
-        ['bmi', 'apache_2_diagnosis', 'apache_3j_diagnosis'])
-    categorical_cols = [x for x in categorical_cols if x not in [
-        'bmi', 'apache_2_diagnosis', 'apache_3j_diagnosis']]
 
     logger.info(f'Target cols: {target_col}')
     logger.info(f'Continuous cols: {continuous_cols}')
     logger.info(f'Categorical cols: {categorical_cols}')
     logger.info(f'Binary cols: {binary_cols}')
 
-    # Get data
-    logger.info('getting data...')
-    df = pd.read_csv(DATA)
-    preds = pd.read_csv(PREDICTION_DATA)
-    if is_semi_supervised_model:
-        semi = pd.read_csv(SEMI_SUPERVISED_DATA)
-    # prob = pd.read_csv(REGRESSIVE_PROB_DATA)
-
-    # df.loc[df['encounter_id'].isin(prob['encounter_id']),
-    # 'apache_4a_hospital_death_prob'] =
-    #  prob.loc[prob['encounter_id'].isin(df['encounter_id']),
-    # 'apache_4a_hospital_death_prob'].values
-
+    logger.info(f'Masking columns')
     df = df[[target_col] + continuous_cols + categorical_cols + binary_cols]
-    preds = preds[continuous_cols + categorical_cols + binary_cols]
-
     logger.info(f'Dataframe has these cols {list(df.columns)}')
 
     # Typify
     logger.info('typifying...')
     df[continuous_cols] = df[continuous_cols].astype('float32')
-    df[categorical_cols] = df[categorical_cols].astype(
-        'str').astype('category')
+    df[categorical_cols] = df[categorical_cols].astype('str').astype('category')
     df[binary_cols] = df[binary_cols].astype('str').astype('category')
     df[target_col] = df[target_col].astype('str').astype('category')
 
-    preds[continuous_cols] = preds[continuous_cols].astype('float32')
-    preds[categorical_cols] = preds[categorical_cols].astype(
-        'str').astype('category')
-    preds[binary_cols] = preds[binary_cols].astype('str').astype('category')
-
-    # Splitting
-    strat_cols = [target_col]
-    logger.info(
-        f'doing test-train-split stratifying on cols: {strat_cols} and hospital_id')
-
-    strat_cols = [target_col]
-
-    train = pd.DataFrame()
-    val = pd.DataFrame()
-    test = pd.DataFrame()
-
-    for hospital_id in df['hospital_id'].unique():
-        subset = df[df['hospital_id'] == hospital_id]
-
-        if 10 < len(subset):
-            classes, y_indices = np.unique(
-                subset[strat_cols],
-                return_inverse=True
-            )
-            class_counts = np.bincount(y_indices)
-
-            if 2 > np.min(class_counts):
-                tmp_train, tmp_test = train_test_split(
-                    subset,
-                    test_size=0.1,
-                    random_state=0
-                )
-                tmp_train, tmp_val = train_test_split(
-                    tmp_train,
-                    test_size=0.1,
-                    random_state=0
-                )
-            else:
-                tmp_train, tmp_test = train_test_split(
-                    subset,
-                    test_size=0.1,
-                    random_state=0,
-                    stratify=subset[strat_cols]
-                )
-                tmp_train, tmp_val = train_test_split(
-                    tmp_train,
-                    test_size=0.1,
-                    random_state=0,
-                    stratify=tmp_train[strat_cols]
-                )
-
-            train = train.append(tmp_train)
-            val = val.append(tmp_val)
-            test = test.append(tmp_test)
-
-    if is_semi_supervised_model:
-        logger.info('Using semi-supervised data')
-        semi_preds = preds[preds['encounter_id'].isin(semi['encounter_id'])]
-        semi_preds[target_col] = 1
-        df = df.append(semi_preds)
-        train = train.append(semi_preds)
-
-    # Persist data
-    if is_final_model:
-        logger.info('Using all data')
-        df.to_csv(TRAIN_CSV_OUT, index=False)
-    else:
-        logger.info('Using train data')
-        train.to_csv(TRAIN_CSV_OUT, index=False)
-    val.to_csv(VAL_CSV_OUT, index=False)
-    test.to_csv(TEST_CSV_OUT, index=False)
-    preds.to_csv(PREDS_CSV_OUT, index=False)
-
-    with open(Path.cwd()
-              .joinpath(output_filepath)
-              .joinpath('continuous-cols.pickle'), 'wb') as f:
-        pickle.dump(continuous_cols, f)
-
-    with open(Path.cwd()
-              .joinpath(output_filepath)
-              .joinpath('target-col.pickle'), 'wb') as f:
-        pickle.dump(target_col, f)
-
-    with open(Path.cwd()
-              .joinpath(output_filepath)
-              .joinpath('categorical-cols.pickle'), 'wb') as f:
-        pickle.dump(categorical_cols, f)
-
-    with open(Path.cwd()
-              .joinpath(output_filepath)
-              .joinpath('binary-cols.pickle'), 'wb') as f:
-        pickle.dump(binary_cols, f)
+    # Export
+    output_filename = Path.cwd().joinpath(input_csv_filepath).stem + '.feather'
+    df.to_feather(Path.cwd().joinpath(output_dirpath).joinpath(output_filename))
 
 
 if __name__ == '__main__':

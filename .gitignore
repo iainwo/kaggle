@@ -95,5 +95,6 @@ catboost_info/
 test-results.xml
 */data/**/*.csv
 */data/**/*.pickle
+*/data/**/*.feather
 models/
 reports/
