@@ -77,4 +77,4 @@ jobs:
       run: |
         make publish
       working-directory: ./wids-datathon-2020/
-      if: github.base_ref == 'master'
+      if: github.base_ref == 'master' && github.event.pull_request.merged == true
