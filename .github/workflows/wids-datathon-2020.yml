@@ -11,6 +11,10 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest]
+        
+    env:
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
 
     steps:
     - uses: actions/checkout@v2
