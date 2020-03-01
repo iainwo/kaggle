@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='wids-datathon-2020',
-    version='0.0.2',
+    version='0.0.3',
     license='MIT',
     author='Iain Wong',
     author_email='iainwong@outlook.com',
