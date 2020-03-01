@@ -90,7 +90,7 @@ $ make requirements
 $ echo 'make some changes to the wids-datathon-2020 python module'
 $ vim my-file.py
 
-$ echo 'run module'
+$ echo 'use the module'
 $ make data
 $ make model
 $ make predictions
