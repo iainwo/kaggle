@@ -81,4 +81,4 @@ jobs:
       run: |
         make publish
       working-directory: ./wids-datathon-2020/
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/master' && matrix.python-version == 3.7
