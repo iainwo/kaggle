@@ -8,36 +8,26 @@ from catboost import CatBoostClassifier
 
 
 @click.command()
-@click.argument('input_filepath', type=click.Path(exists=True), default='models/')
+@click.argument('model_filepath', type=click.Path(exists=True), default='models/')
 @click.argument('inference_filepath', type=click.Path(exists=True), default='data/processed/')
 @click.argument('output_filepath', type=click.Path(), default='data/predictions/')
-def main(input_filepath, inference_filepath, output_filepath):
+def main(model_filepath, inference_filepath, output_filepath):
     """ Runs modelling scripts to turn preprocessed data from (../processed) into
         to a model (../models)
     """
     logger = logging.getLogger(__name__)
 
-    INPUT_DIR = Path.cwd().joinpath(input_filepath)
-    logger.info(f'prediction with model in {INPUT_DIR.name}')
-    logger.info('loading envs')
+    logger.info(f'loading model {model_filepath}')
+    model = CatBoostClassifier().load_model(str(Path.cwd().joinpath(model_filepath)))
 
-    # prediction data
-    PRED_CSV = Path.cwd().joinpath(inference_filepath).joinpath('preds.csv')
-    PRED_CSV_OUT = Path.cwd().joinpath(output_filepath).joinpath('preds.csv')
-
-    # model
-    MODEL = Path.cwd().joinpath(input_filepath).joinpath('catboost_model.dump')
-
-    logger.info('loading data')
-    df = pd.read_csv(PRED_CSV)
+    logger.info(f'loading inference data {inference_filepath}')
+    df = pd.read_feather(Path.cwd().joinpath(inference_filepath))
 
     # Store the encounter ids, before removing them for training
     arr = df['encounter_id']
 
-    # Model
-    model = CatBoostClassifier()
-    model.load_model(str(MODEL))
-
+    logger.info(f'inference data has cols: {df.columns}')
+    logger.info(f'masking inference data to cols: {model.feature_names_}')
     X = df[model.feature_names_]
 
     logger.info('making predictions')
@@ -51,7 +41,8 @@ def main(input_filepath, inference_filepath, output_filepath):
     X_encounter_id = round(pd.DataFrame(arr, columns=['encounter_id']))  # round for numerical errs
     X_encounter_id = X_encounter_id.astype('int32')
 
-    pd.concat([X_encounter_id, y], axis=1).to_csv(PRED_CSV_OUT, index=False)
+    output_filename = Path.cwd().joinpath(inference_filepath).stem + '.csv'
+    pd.concat([X_encounter_id, y], axis=1).to_csv(Path.cwd().joinpath(output_filepath).joinpath(output_filename), index=False)
 
 
 if __name__ == '__main__':

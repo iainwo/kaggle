@@ -72,11 +72,11 @@ jobs:
       run: |
         make predictions
       working-directory: ./wids-datathon-2020/
-    - name: Publish predictions
+    - name: Archive predictions
       uses: actions/upload-artifact@v1
       with:
         name: predictions
-        path: ./wids-datathon-2020/data/predictions/preds.csv
+        path: ./wids-datathon-2020/data/predictions/unlabeled_encoded.csv
     - name: Publish Distribution
       run: |
         make publish

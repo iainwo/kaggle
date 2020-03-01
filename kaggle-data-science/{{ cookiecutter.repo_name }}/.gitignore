@@ -94,5 +94,6 @@ notebooks/catboost_info/
 catboost_info/
 data/**/*.csv
 data/**/*.pickle
+data/**/*.feather
 models/
 reports/

@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='wids-datathon-2020',
-    version='0.0.2',
+    version='0.0.3',
     license='MIT',
     author='Iain Wong',
     author_email='iainwong@outlook.com',
@@ -13,11 +13,19 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/iainwo/kaggle/tree/master/wids-datathon-2020',
-    packages=find_packages(),
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+    ],
+    install_requires=[
+        'pandas',
+        'python-dotenv',
+        'Click',
+        'pyarrow',
+        'numpy',
+        'scikit-learn',
     ],
     python_requires='>=3.6',
 )

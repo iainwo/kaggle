@@ -39,11 +39,19 @@ $ mkdir -p data/external data/raw data/interim data/processed data/predictions m
 $ zip widsdatathon2020.zip "WiDS Datathon 2020 Dictionary.csv" training_v2.csv unlabeled.csv
 $ cp widsdatathon2020.zip data/external
 
-$ echo "Model predictions"
-$ python3 -m wids-datathon-2020.data.make_dataset data/raw data/interim
-$ python3 -m wids-datathon-2020.features.build_features data/interim data/processed
-$ python3 -m wids-datathon-2020.models.train_model data/processed models/
-$ python3 -m wids-datathon-2020.models.predict_model models/ data/processed/ data/predictions
+$ echo "Model"
+$ python3 -m wids-datathon-2020.data.unzip_dataset data/external/widsdatathon2020.zip data/raw/
+$ python3 -m wids-datathon-2020.data.make_dataset data/raw/training_v2.csv data/interim/
+$ python3 -m wids-datathon-2020.data.stratify_dataset data/interim/training_v2.feather data/interim/
+$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/training_v2_train.feather data/processed/ models/ --is-create-encoders
+$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/training_v2_val.feather data/processed/ models/
+$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/training_v2_test.feather data/processed/ models/
+$ python3 -m wids-datathon-2020.models.train_model data/processed/training_v2_train_encoded.feather data/processed/training_v2_val_encoded.feather data/processed/training_v2_test_encoded.feather models/ reports/ reports/figures
+
+$ echo "Predict"
+$ python3 -m wids-datathon-2020.data.make_dataset data/raw/unlabeled.csv data/interim/
+$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/unlabeled.feather data/processed/ models/
+$ python3 -m wids-datathon-2020.models.predict_model models/model.dump data/processed/unlabeled_encoded.feather data/predictions
 
 $ echo "Observe model and preprocessing artifacts"
 $ ls -larth models/
