@@ -3,7 +3,7 @@ wids_datathon_2020
 
 The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival. (Kaggle Proj) https://www.kaggle.com/c/widsdatathon2020/overview
 
-# How-to Use Perform Inference
+# How-to Perform Inference
 This project provides a publicly-accessible and straight forward way to perform batch or realtime inference based on WiDS Datathon 2020 data.
 
 There are essentially four steps required for inference:
