@@ -48,12 +48,14 @@ def make_dataset(input_csv_filepath, output_dirpath):
     output_filename = Path.cwd().joinpath(input_csv_filepath).stem + '.feather'
     df.to_feather(Path.cwd().joinpath(output_dirpath).joinpath(output_filename))
 
+
 @click.command()
 @click.argument('input_csv_filepath', type=click.Path(exists=True), default='data/raw/training_v2.csv')
 @click.argument('output_dirpath', type=click.Path(exists=True), default='data/interim/')
 def main(input_csv_filepath, output_dirpath):
     make_dataset(input_csv_filepath, output_dirpath)
-    
+
+
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)

@@ -136,6 +136,7 @@ def labelencode(df, cols, encoders=None, unknown_value='UNK'):
 
     return df, encoders
 
+
 @click.command()
 @click.argument('input_filepath', type=click.Path(exists=True), default='data/interim/training_v2_train.feather')
 @click.argument('output_filepath', type=click.Path(exists=True), default='data/processed/')
@@ -143,6 +144,7 @@ def labelencode(df, cols, encoders=None, unknown_value='UNK'):
 @click.option('--is-create-encoders', is_flag=True)
 def main(input_filepath, output_filepath, encoder_filepath, is_create_encoders):
     encode_dataset(input_filepath, output_filepath, encoder_filepath, is_create_encoders)
+
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
