@@ -64,7 +64,7 @@ predictions: requirements
 
 ## Make Streamlit
 app: build
-	docker run -p8080:8080 iainwo/wids-datathon-2020
+	docker run -p8080:8080 iainwo/wids-datathon-2020:latest
 
 ## Generate visuals for feature EDA
 eda: requirements
