@@ -56,7 +56,7 @@ data: requirements
 
 ## Make Model
 model: requirements
-	$(PYTHON_INTERPRETER) wids_datathon_2020/models/train_model.py data/processed/training_v2_train_encoded.feather data/processed/training_v2_val_encoded.feather data/processed/training_v2_test_encoded.feather models/ reports/ reports/figures
+	$(PYTHON_INTERPRETER) wids_datathon_2020/models/train_model.py data/processed/training_v2_train_encoded.feather data/processed/training_v2_val_encoded.feather data/processed/training_v2_test_encoded.feather models/ reports/ reports/figures/
 
 ## Make Predictions
 predictions: requirements
