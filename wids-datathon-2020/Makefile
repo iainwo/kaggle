@@ -24,7 +24,7 @@ endif
 requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
-	$(PYTHON_INTERPRETER) -m ipykernel install --user --name wids_datathon_2020 --display-name="wids-datathon-2020"
+	$(PYTHON_INTERPRETER) -m ipykernel install --user --name wids_datathon_2020 --display-name="wids_datathon_2020"
 
 ## Install Development Deps
 requirements_dev: test_environment
@@ -35,6 +35,7 @@ requirements_dev: test_environment
 build: requirements
 	$(PYTHON_INTERPRETER) -m pip install --user --upgrade setuptools wheel
 	$(PYTHON_INTERPRETER) setup.py sdist bdist_wheel
+	docker image build -t iainwo/wids-datathon-2020 -f streamlit/Dockerfile.streamlit .
 
 ## Publish python package to PyPi
 publish:
@@ -43,32 +44,31 @@ publish:
 
 ## Make Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/unzip_dataset.py data/external/widsdatathon2020.zip data/raw/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py data/raw/training_v2.csv data/interim/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/stratify_dataset.py data/interim/training_v2.feather data/interim/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/encode_dataset.py --is-create-encoders data/interim/training_v2_train.feather data/processed/ models/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/encode_dataset.py data/interim/training_v2_val.feather data/processed/ models/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/encode_dataset.py data/interim/training_v2_test.feather data/processed/ models/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py data/raw/unlabeled.csv data/interim/
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/encode_dataset.py data/interim/unlabeled.feather data/processed/ models/
-	# $(PYTHON_INTERPRETER) wids-datathon-2020/features/build_features.py data/interim data/processed
-
-## Make Dataset for Kaggle Submission
-data_final: requirements
-	$(PYTHON_INTERPRETER) wids-datathon-2020/data/make_dataset.py --is-final-model --is-semi-supervised-model data/raw data/interim
-	$(PYTHON_INTERPRETER) wids-datathon-2020/features/build_features.py data/interim data/processed
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/unzip_dataset.py data/external/widsdatathon2020.zip data/raw/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/make_dataset.py data/raw/training_v2.csv data/interim/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/stratify_dataset.py data/interim/training_v2.feather data/interim/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/encode_dataset.py --is-create-encoders data/interim/training_v2_train.feather data/processed/ models/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/encode_dataset.py data/interim/training_v2_val.feather data/processed/ models/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/encode_dataset.py data/interim/training_v2_test.feather data/processed/ models/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/make_dataset.py data/raw/unlabeled.csv data/interim/
+	$(PYTHON_INTERPRETER) wids_datathon_2020/data/encode_dataset.py data/interim/unlabeled.feather data/processed/ models/
+	# $(PYTHON_INTERPRETER) wids_datathon_2020/features/build_features.py data/interim data/processed
 
 ## Make Model
 model: requirements
-	$(PYTHON_INTERPRETER) wids-datathon-2020/models/train_model.py data/processed/training_v2_train_encoded.feather data/processed/training_v2_val_encoded.feather data/processed/training_v2_test_encoded.feather models/ reports/ reports/figures
+	$(PYTHON_INTERPRETER) wids_datathon_2020/models/train_model.py data/processed/training_v2_train_encoded.feather data/processed/training_v2_val_encoded.feather data/processed/training_v2_test_encoded.feather models/ reports/ reports/figures
 
 ## Make Predictions
 predictions: requirements
-	$(PYTHON_INTERPRETER) wids-datathon-2020/models/predict_model.py models/model.dump data/processed/unlabeled_encoded.feather data/predictions
+	$(PYTHON_INTERPRETER) wids_datathon_2020/models/predict_model.py data/processed/unlabeled_encoded.feather models/model.dump data/predictions
+
+## Make Streamlit
+app: build
+	docker run -p8080:8080 iainwo/wids-datathon-2020
 
 ## Generate visuals for feature EDA
 eda: requirements
-	$(PYTHON_INTERPRETER) wids-datathon-2020/visualization/visualize.py
+	$(PYTHON_INTERPRETER) wids_datathon_2020/visualization/visualize.py
 
 ## Delete all compiled Python files
 clean:
@@ -80,7 +80,7 @@ clean:
 
 ## Lint using flake8
 lint:
-	flake8 wids-datathon-2020
+	flake8 wids_datathon_2020
 
 ## Run unit tests
 test:

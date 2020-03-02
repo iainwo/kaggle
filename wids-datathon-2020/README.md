@@ -6,83 +6,17 @@ The challenge is to create a model that uses data from the first 24 hours of int
 # How-to Perform Inference
 This project provides a publicly-accessible and straight forward way to perform batch or realtime inference based on WiDS Datathon 2020 data.
 
-There are essentially four steps required for inference:
-
-1. Obtain a copy of the [Kaggle Competition Dataset](https://www.kaggle.com/c/widsdatathon2020/data)
-2. Obtain a copy or fabricate data which to perform inference upon.
-3. Use the modelling `wids-datathon-2020` PyPi module to create a model and inference-requisite preprocessing artifacts
-4. Apply the preprocessing artifacts and model to the inference data to manufacture batch or realtime inference
-
-## 1. Obtain a copy of the [Kaggle Competition Dataset](https://www.kaggle.com/c/widsdatathon2020/data)
-
 ```bash
-$ mkdir -p data/external data/raw data/interim data/processed data/predictions models/
-$ wget -O data/external/widsdatathon2020.zip https://github.com/iainwo/kaggle/blob/master/wids-datathon-2020/data/external/widsdatathon2020.zip
-```
-
-## 2. Obtain a copy or fabricate data which to perform inference upon.
-
-```bash
-$ touch data/raw/my-inference-samples.csv
-```
-
-## 3. Use the modelling `wids-datathon-2020` PyPi module to create a model and inference-requisite preprocessing artifacts
-
-```bash
-$ echo "Prepare software env"
-$ conda create -n testenv python=3.6
-$ conda activate testenv
 $ pip install wids-datathon-2020
 
-$ echo "Stage data"
 $ mkdir -p data/external data/raw data/interim data/processed data/predictions models/
-$ zip widsdatathon2020.zip "WiDS Datathon 2020 Dictionary.csv" training_v2.csv unlabeled.csv
-$ cp widsdatathon2020.zip data/external
+$ wget -O data/external/widsdatathon2020.zip https://github.com/iainwo/kaggle/blob/master/wids-datathon-2020/data/external/widsdatathon2020.zip
 
-$ echo "Model"
-$ python3 -m wids-datathon-2020.data.unzip_dataset data/external/widsdatathon2020.zip data/raw/
-$ python3 -m wids-datathon-2020.data.make_dataset data/raw/training_v2.csv data/interim/
-$ python3 -m wids-datathon-2020.data.stratify_dataset data/interim/training_v2.feather data/interim/
-$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/training_v2_train.feather data/processed/ models/ --is-create-encoders
-$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/training_v2_val.feather data/processed/ models/
-$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/training_v2_test.feather data/processed/ models/
-$ python3 -m wids-datathon-2020.models.train_model data/processed/training_v2_train_encoded.feather data/processed/training_v2_val_encoded.feather data/processed/training_v2_test_encoded.feather models/ reports/ reports/figures
+$ python -m wids_datathon_2020.data.unzip_dataset
+$ python -m wids_datathon_2020.learn data/raw/training_v2.csv
+$ python -m wids_datathon_2020.inference data/raw/unlabeled.csv
 
-$ echo "Predict"
-$ python3 -m wids-datathon-2020.data.make_dataset data/raw/unlabeled.csv data/interim/
-$ python3 -m wids-datathon-2020.data.encode_dataset data/interim/unlabeled.feather data/processed/ models/
-$ python3 -m wids-datathon-2020.models.predict_model models/model.dump data/processed/unlabeled_encoded.feather data/predictions
-
-$ echo "Observe model and preprocessing artifacts"
-$ ls -larth models/
-$ ls -larth data/predictions/
-```
-
-## 4. Apply the preprocessing artifacts and model to the inference data to manufacture batch or realtime inference
-
-Refer to [this notebook](./notebooks/5.0.0-iwong-batch-prediction.ipynb) for a cell-by-cell example.
-At a high-level realtime inference would look something like this:
-
-```python
-df = pd.read_csv('my-inference-samples.csv')
-
-# cast
-df[continuous_cols] = df[continuous_cols].astype('float32')
-df[categorical_cols] = df[categorical_cols].astype('str').astype('category')
-df[binary_cols] = df[binary_cols].astype('str').astype('category')
-df[target_col] = df[target_col].astype('str').astype('category')
-
-# fill
-df[continuous_cols] = df[continuous_cols].fillna(0)
-
-# normalize, labelencode, ohe
-df, _ = normalize(df, continuous_cols, scalers)
-# ...
-
-y_preds = model.predict(X)
-y_proba = model.predict_proba(X)
-y_proba_death = y_proba[:,1]
-
+$ head data/predictions/unlabeled.csv
 ```
 
 # How-to Develop

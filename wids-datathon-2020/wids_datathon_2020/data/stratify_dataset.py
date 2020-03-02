@@ -8,10 +8,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 
-@click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
+def stratify_dataset(input_filepath, output_filepath):
     """ Runs data stratifying scripts to form
         train, validation and test sets.
     """
@@ -72,6 +69,11 @@ def main(input_filepath, output_filepath):
     val.reset_index(drop=True).to_feather(Path.cwd().joinpath(output_filepath).joinpath(output_filename + '_val.feather'))
     test.reset_index(drop=True).to_feather(Path.cwd().joinpath(output_filepath).joinpath(output_filename + '_test.feather'))
 
+@click.command()
+@click.argument('input_filepath', type=click.Path(exists=True), default='data/interim/training_v2.feather')
+@click.argument('output_filepath', type=click.Path(exists=True), default='data/interim/')
+def main(input_filepath, output_filepath):
+    stratify_dataset(input_filepath, output_filepath)
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

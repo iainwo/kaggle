@@ -11,12 +11,7 @@ import bisect
 import numpy as np
 
 
-@click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-@click.argument('encoder_filepath', type=click.Path())
-@click.option('--is-create-encoders', is_flag=True)
-def main(input_filepath, output_filepath, encoder_filepath, is_create_encoders):
+def encode_dataset(input_filepath, output_filepath, encoder_filepath, is_create_encoders):
     """ Encode the dataset: encoding, scaling and filling the
         continuous and categorical values.
     """
@@ -141,6 +136,13 @@ def labelencode(df, cols, encoders=None, unknown_value='UNK'):
 
     return df, encoders
 
+@click.command()
+@click.argument('input_filepath', type=click.Path(exists=True), default='data/interim/training_v2_train.feather')
+@click.argument('output_filepath', type=click.Path(exists=True), default='data/processed/')
+@click.argument('encoder_filepath', type=click.Path(exists=True), default='models/')
+@click.option('--is-create-encoders', is_flag=True)
+def main(input_filepath, output_filepath, encoder_filepath, is_create_encoders):
+    encode_dataset(input_filepath, output_filepath, encoder_filepath, is_create_encoders)
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

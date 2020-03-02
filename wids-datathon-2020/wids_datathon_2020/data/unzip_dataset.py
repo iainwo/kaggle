@@ -7,9 +7,9 @@ import zipfile
 
 
 @click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
+@click.argument('input_filepath', type=click.Path(exists=True), default='data/external/widsdatathon2020.zip')
+@click.argument('output_filepath', type=click.Path(exists=True), default='data/raw/')
+def unzip_dataset(input_filepath, output_filepath):
     """ Unzip a dataset from external data (data/external) into
         the raw staging directory (data/raw).
     """
@@ -33,4 +33,4 @@ if __name__ == '__main__':
     # load up the .env entries as environment variables
     load_dotenv(find_dotenv())
 
-    main()
+    unzip_dataset()
