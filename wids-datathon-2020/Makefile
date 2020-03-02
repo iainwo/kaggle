@@ -35,6 +35,8 @@ requirements_dev: test_environment
 build: requirements
 	$(PYTHON_INTERPRETER) -m pip install --user --upgrade setuptools wheel
 	$(PYTHON_INTERPRETER) setup.py sdist bdist_wheel
+
+build_app:
 	docker image build -t iainwo/wids-datathon-2020 -f streamlit/Dockerfile.streamlit .
 
 ## Publish python package to PyPi

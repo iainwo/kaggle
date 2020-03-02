@@ -76,6 +76,7 @@ jobs:
         path: ./wids-datathon-2020/data/predictions/unlabeled_encoded.csv
     - name: Publish to Dockerhub
       run: |
+        make build_app
         echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
         docker push iainwo/wids-datathon-2020:latest
       working-directory: ./wids-datathon-2020/
