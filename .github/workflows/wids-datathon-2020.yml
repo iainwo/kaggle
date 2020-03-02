@@ -81,13 +81,14 @@ jobs:
         docker push iainwo/wids-datathon-2020:latest
       working-directory: ./wids-datathon-2020/
       if: github.ref == 'refs/heads/master' && matrix.python-version == 3.7
-    - name: Login to Heroku Container registry
+    - name: Publishing Image to Heroku
       env: 
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       run: |
         heroku container:login
         docker tag iainwo/wids-datathon-2020:latest registry.heroku.com/wids-datathon-2020/web
         docker push registry.heroku.com/wids-datathon-2020/web
+      if: github.ref == 'refs/heads/master' && matrix.python-version == 3.7
     - name: Publish Distribution
       run: |
         make publish
