@@ -15,6 +15,8 @@ jobs:
     env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     steps:
     - uses: actions/checkout@v2
@@ -31,11 +33,6 @@ jobs:
     - name: Lint
       run: |
         make lint
-        # pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       working-directory: ./wids-datathon-2020/
     - name: Test
       run: |
@@ -77,6 +74,12 @@ jobs:
       with:
         name: predictions
         path: ./wids-datathon-2020/data/predictions/unlabeled_encoded.csv
+    - name: Publish to Dockerhub
+      run: |
+        echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        docker push iainwo/wids-datathon-2020:latest
+      working-directory: ./wids-datathon-2020/
+      if: github.ref == 'refs/heads/master' && matrix.python-version == 3.7
     - name: Publish Distribution
       run: |
         make publish

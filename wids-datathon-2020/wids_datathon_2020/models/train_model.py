@@ -16,14 +16,7 @@ import json
 # import matplotlib.pyplot as plt
 
 
-@click.command()
-@click.argument('train_filepath', type=click.Path(), default='data/processed/training_v2_train_encoded.feather')
-@click.argument('val_filepath', type=click.Path(), default='data/processed/training_v2_val_encoded.feather')
-@click.argument('test_filepath', type=click.Path(), default='data/processed/training_v2_test_encoded.feather')
-@click.argument('output_filepath', type=click.Path(), default='models/')
-@click.argument('report_filepath', type=click.Path(), default='reports/')
-@click.argument('figure_filepath', type=click.Path(), default='reports/figures/')
-def main(train_filepath, val_filepath, test_filepath, output_filepath, report_filepath, figure_filepath):
+def train_model(train_filepath, val_filepath, test_filepath, output_filepath, report_filepath, figure_filepath):
     """ Runs modelling scripts to turn preprocessed data from (../processed) into
         to a model (../models)
     """
@@ -42,15 +35,22 @@ def main(train_filepath, val_filepath, test_filepath, output_filepath, report_fi
     X_test = pd.read_feather(Path.cwd().joinpath(test_filepath))
     y_test = X_test.pop(target_col)
 
-    metadata_cols = ['encounter_id']
+    exclude_cols = ['apache_4a_hospital_death_prob', 'apache_3j_diagnosis', 'apache_4a_icu_death_prob',
+                    'apache_2_diagnosis', 'apache_3j_bodysystem', 'apache_2_bodysystem', 'apache_post_operative']
+    include_cols = ['age', 'ventilated_apache', 'elective_surgery',
+                    'gcs_verbal_apache',  'gcs_motor_apache', 'd1_spo2_min', 'icu_id']
 
     categorical_cols = X_train.select_dtypes(include='category').columns
-    categorical_cols = [x for x in categorical_cols if x not in metadata_cols]
+    categorical_cols = [x for x in categorical_cols if x not in exclude_cols and (0 == len(include_cols) or x in include_cols)]
     logger.info(f'using categorical cols: {categorical_cols}')
 
     numerical_cols = X_train.select_dtypes(include='number').columns
-    numerical_cols = [x for x in numerical_cols if x not in metadata_cols]
+    numerical_cols = [x for x in numerical_cols if x not in exclude_cols and (0 == len(include_cols) or x in include_cols)]
     logger.info(f'using numerical cols: {numerical_cols}')
+
+    X_train = X_train[categorical_cols + numerical_cols]
+    X_val = X_val[categorical_cols + numerical_cols]
+    X_test = X_test[categorical_cols + numerical_cols]
 
     logger.info('modelling')
     model_args = {
@@ -221,6 +221,17 @@ def calc_feature_importances(
 
     # pickle_obj(Path.cwd().joinpath(output_filepath).joinpath(f'{file_tag}-expected-values.pickle'), expected_values)
     # pickle_obj(Path.cwd().joinpath(output_filepath).joinpath(f'{file_tag}-shap-values.pickle'), shap_values)
+
+
+@click.command()
+@click.argument('train_filepath', type=click.Path(exists=True), default='data/processed/training_v2_train_encoded.feather')
+@click.argument('val_filepath', type=click.Path(exists=True), default='data/processed/training_v2_val_encoded.feather')
+@click.argument('test_filepath', type=click.Path(exists=True), default='data/processed/training_v2_test_encoded.feather')
+@click.argument('output_filepath', type=click.Path(exists=True), default='models/')
+@click.argument('report_filepath', type=click.Path(exists=True), default='reports/')
+@click.argument('figure_filepath', type=click.Path(exists=True), default='reports/figures/')
+def main(train_filepath, val_filepath, test_filepath, output_filepath, report_filepath, figure_filepath):
+    train_model(train_filepath, val_filepath, test_filepath, output_filepath, report_filepath, figure_filepath)
 
 
 if __name__ == '__main__':

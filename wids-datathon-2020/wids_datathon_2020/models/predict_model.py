@@ -7,11 +7,7 @@ import pandas as pd
 from catboost import CatBoostClassifier
 
 
-@click.command()
-@click.argument('model_filepath', type=click.Path(exists=True), default='models/')
-@click.argument('inference_filepath', type=click.Path(exists=True), default='data/processed/')
-@click.argument('output_filepath', type=click.Path(), default='data/predictions/')
-def main(model_filepath, inference_filepath, output_filepath):
+def predict_model(inference_filepath, model_filepath, output_filepath):
     """ Runs modelling scripts to turn preprocessed data from (../processed) into
         to a model (../models)
     """
@@ -43,6 +39,14 @@ def main(model_filepath, inference_filepath, output_filepath):
 
     output_filename = Path.cwd().joinpath(inference_filepath).stem + '.csv'
     pd.concat([X_encounter_id, y], axis=1).to_csv(Path.cwd().joinpath(output_filepath).joinpath(output_filename), index=False)
+
+
+@click.command()
+@click.argument('inference_filepath', type=click.Path(exists=True), default='data/processed/unlabeled_encoded.feather')
+@click.argument('model_filepath', type=click.Path(exists=True), default='models/model.dump')
+@click.argument('output_filepath', type=click.Path(), default='data/predictions/')
+def main(inference_filepath, model_filepath, output_filepath):
+    predict_model(inference_filepath, model_filepath, output_filepath)
 
 
 if __name__ == '__main__':
