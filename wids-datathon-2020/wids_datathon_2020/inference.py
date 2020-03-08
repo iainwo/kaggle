@@ -40,11 +40,11 @@ def inference_sample(samples):
 
         inference_file_stem = PurePath(inference_file.name).stem
         inference(inference_file.name)
+        encoded = pd.read_feather('data/processed/' + inference_file_stem + '_encoded.feather').to_dict(orient='record')
         preds = pd.read_csv(
             f'./data/predictions/{inference_file_stem}_encoded.csv'
         )[['encounter_id', 'hospital_death']].to_dict(orient='record')
-    return preds
-
+    return encoded, preds
 
 @click.command()
 @click.argument('dataset_filepath', type=click.Path(exists=True), default='data/raw/training_v2.csv')

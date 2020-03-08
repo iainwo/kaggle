@@ -10,6 +10,9 @@ import pickle
 import plotly.express as px
 import matplotlib.pyplot as plt
 import shap
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
  
 st.write('''
     # ISeeYou
@@ -41,6 +44,10 @@ st.sidebar.markdown('Select the Mode of Evaluation:')
 mode = st.sidebar.radio('Mode', ['New Patient', 'Historical Patient Data', 'Historical Batch Patient Data'])
 st.sidebar.markdown('---')
 
+def get_shap_values(model, samples):
+    explainer = shap.TreeExplainer(model)
+    return explainer, explainer.shap_values(samples)
+
 if 'New Patient' == mode:
     st.sidebar.markdown('Fill in the patient\'s details. For proper estimates it is important to fill out these details comprehensively and accurately:')
 
@@ -50,7 +57,9 @@ if 'New Patient' == mode:
 
     feature_inputs['encounter_id'] = 1001
 
-    preds = pd.DataFrame.from_dict(inference_sample({0: feature_inputs}), orient='columns')
+    encoded, preds = inference_sample({0: feature_inputs})
+    encoded = pd.DataFrame.from_dict(encoded, orient='columns')
+    preds = pd.DataFrame.from_dict(preds, orient='columns')
     
     severity_hist = [dataset_agg['proba_death'].sample(1000)]
     group_labels = ['MIT GOSSIS Dataset']
@@ -58,27 +67,42 @@ if 'New Patient' == mode:
     preds['encounter_id'] = preds['encounter_id'].astype('int')
     preds['hospital_death'] = round(preds['hospital_death'], 2)
     
+    hospital_death_proba = round(preds['hospital_death'], 2)[0]
     st.markdown(f'''## Severity of Patient Condition :pager: ''')
-    fig = px.bar(preds, x='encounter_id', y='hospital_death', color='hospital_death', text='hospital_death')
-
-    #fig = ff.create_distplot(severity_hist, group_labels)
-    st.plotly_chart(fig)
+    image = Image.new('RGB', (1000,500), (250,250,250))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype("./streamlit/OpenSans-Regular.ttf", size=400)
+    draw.text((10, 0), f'{hospital_death_proba}', (0,0,0), font=font, align='center')
+    st.image(image, caption='Scores range between [0, 1]. Higher scores indicate a higher severity.', use_column_width=True)
+      
+    shap_df = pd.DataFrame.from_dict({0: feature_inputs}, orient='index')
+    shap_df = shap_df[dataset_agg[model.feature_names_].columns]
+    encoded = encoded[dataset_agg[model.feature_names_].columns]
+    explainer, shap_values = get_shap_values(model, encoded)
     
-    shap_values = model.get_feature_importance(Pool(dataset_agg[model.feature_names_], label=dataset_agg['hospital_death'], cat_features=dataset_agg[model.feature_names_].iloc[:, model.get_cat_feature_indices()].columns), type='ShapValues')
-    expected_values = shap_values[0, -1]
-    shap_values = shap_values[:, :-1]
+    # shap_values = model.get_feature_importance(
+    #     Pool(
+    #         dataset_agg[model.feature_names_],
+    #         label=dataset_agg['hospital_death'],
+    #         cat_features=dataset_agg[model.feature_names_].iloc[:, model.get_cat_feature_indices()].columns
+    #     ),
+    #     type='ShapValues'
+    # )
+    # expected_values = shap_values[0, -1]
+    # shap_values = shap_values[:, :-1]
     
     st.write(f'''## Severity Analysis :hospital: ''')
     
     st.markdown(f'''### FACTORS IMPACTING PATIENT HEALTH''')
     st.markdown(f'''
         This plot details the role each of the Patient's details had in determining the severity of their condition.
-        The red-coloured segments visualize which variables are acting as stabilizing factors in the Patient's condidtion.
-        Blue-coloured segments show the factors that are associated with a deterioration in health.
+        The blue-coloured segments visualize which variables are acting as stabilizing factors in the Patient's condidtion.
+        Red-coloured segments show the factors that are associated with a deterioration in health.
         The width of these segments represent the proportional influence of a factor as compared to others.
         The bolded model output value represents the severity of the Patient's condition.
     ''')
-    shap.force_plot(expected_values, shap_values[1],matplotlib=True, figsize=(20,3), features = dataset_agg[model.feature_names_].columns, link="logit")
+    #shap.force_plot(expected_values, shap_values[0],matplotlib=True, figsize=(20,3), features = dataset_agg[model.feature_names_].columns, link="logit")
+    shap.force_plot(explainer.expected_value, shap_values[0, :], matplotlib=True, figsize=(20,3), features = dataset_agg[model.feature_names_].columns, link="logit")
     st.pyplot(bbox_inches='tight',dpi=600,pad_inches=0)
     plt.clf()
     #st.image(fig, caption='test', use_column_width=True)
@@ -88,8 +112,9 @@ if 'New Patient' == mode:
         This plot visualizes the cumulative effects of a Patient's health-related factors. On the y-axis, is a listing of the notable factors affecting the Patient.
         On the x-axis is a range expressing the severity of a Patient's condition; closer to (1) is worse.
         Having a value of (1) indicates that the Patient is statistically recognized as falling in dire fatal circumstances.
+        The accumlulation of interacting factors progresses up along the y-axis.
     ''')
-    shap.decision_plot(expected_values, shap_values[1], features = dataset_agg[model.feature_names_].columns, link="logit")
+    shap.decision_plot(explainer.expected_value, shap_values[0], features = dataset_agg[model.feature_names_].columns, link="logit")
     st.pyplot(bbox_inches='tight',dpi=600,pad_inches=0)
     plt.clf()
 

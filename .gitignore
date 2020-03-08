@@ -98,3 +98,4 @@ test-results.xml
 */data/**/*.feather
 */models/
 reports/
+cb_model.json
