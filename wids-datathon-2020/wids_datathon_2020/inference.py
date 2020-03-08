@@ -46,6 +46,7 @@ def inference_sample(samples):
         )[['encounter_id', 'hospital_death']].to_dict(orient='record')
     return encoded, preds
 
+
 @click.command()
 @click.argument('dataset_filepath', type=click.Path(exists=True), default='data/raw/training_v2.csv')
 def main(dataset_filepath):
