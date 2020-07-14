@@ -9,6 +9,7 @@ Productionized solutions to kaggle problems.
 | __Problem__ | __Description__ | __Placement__ | __Solution__ |
 | :---: | --- | --- | --- |
 | WiDS Datathon 2020 ![wids-datathon-2020](https://github.com/iainwo/kaggle/workflows/wids-datathon-2020/badge.svg?branch=master) | The challenge is to create a model that uses data from the first 24 hours of intensive care to predict patient survival.<br> _More: [Git](./wids-datathon-2020/). [Pip](https://pypi.org/project/wids-datathon-2020/). [Streamlit Demo](http://35.223.16.34/). [Jupyter](./wids-datathon-2020/notebooks/). [Dockerhub](https://hub.docker.com/r/iainwo/wids-datathon-2020). [Kaggle](https://www.kaggle.com/c/widsdatathon2020/overview)._ | 160th / 951 | `Batch Prediction` |
+| Halite IV ![halite]() | The challenge is to create an agent that can succeed in the game of Halite IV.<br> _More: [Git](./halite/). [Jupyter](./halite/notebooks/). [Kaggle](https://www.kaggle.com/c/halite)._ | N/A | `N/A` |
 
 ## HOW-TO CREATE NEW PROJECTS
 

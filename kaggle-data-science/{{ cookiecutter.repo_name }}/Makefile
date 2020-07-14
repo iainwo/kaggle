@@ -24,6 +24,7 @@ endif
 requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+    $(PYTHON_INTERPRETER) -m ipykernel install --user --name {{ cookiecutter.repo_name }} --display-name="{{ cookiecutter.repo_name }}"
 
 ## Make Dataset
 data: requirements
