@@ -14,3 +14,7 @@ pytest
 
 # project requirements
 kaggle_environments
+aiofiles
+aiohttp
+selenium
+requests-html
