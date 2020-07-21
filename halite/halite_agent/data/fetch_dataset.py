@@ -5,7 +5,8 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 import time
 import json
-from src.api.KaggleClient import KaggleClient
+import os
+from halite_agent.api.KaggleClient import KaggleClient
 
 
 @click.command()
@@ -22,15 +23,36 @@ def main(output_filepath):
 
 def fetch_dataset(output_filepath):
 
-    EPISODE_WATERMARK = 1100
-    TEAM_WATERMARK = 25
-    REQUEST_LIMIT = 10  # 60*3 # must be smaller than 1000
-    REQUEST_DISCOVERY_BUDGET = 0.5
-    ARBITRARY_TEAM_ID = '5118174'
+    EPISODE_WATERMARK = int(os.environ.get(
+        'HALITE_AGENT_FETCH_DATA_EPISODE_WATERMARK',
+        1100
+    ))
+    TEAM_WATERMARK = int(os.environ.get(
+        'HALITE_AGENT_FETCH_DATA_TEAM_WATERMARK',
+        25
+    ))
+    REQUEST_LIMIT = int(os.environ.get(
+        'HALITE_AGENT_FETCH_DATA_REQUEST_LIMIT',
+        10
+    ))
+    REQUEST_DISCOVERY_BUDGET = float(os.environ.get(
+        'HALITE_AGENT_FETCH_DATA_DISCOVERY_BUDGET',
+        0.1
+    ))
+    SCRAPER_METADATA_FILEPATH = str(os.environ.get(
+        'HALITE_AGENT_FETCH_DATA_SCRAPER_METADATA_FILEPATH',
+        './scraper_metadata'
+    ))
+
+    ARBITRARY_TEAM_ID = str(os.environ.get(
+        'HALITE_AGENT_FETCH_DATA_ARBITRARY_TEAM_ID',
+        '5118174'
+    ))
 
     DOWNLOAD_FILEPATH = Path.cwd().joinpath(output_filepath)
     DOWNLOAD_FILEPATH.mkdir(parents=True, exist_ok=True)
-    METADATA_DIR = Path.cwd().joinpath('scraper_metadata')
+
+    METADATA_DIR = Path.cwd().joinpath(SCRAPER_METADATA_FILEPATH)
     METADATA_DIR.mkdir(parents=True, exist_ok=True)
     EPISODE_PMAP_FILEPATH = str(
         METADATA_DIR.joinpath('episode_priority_map.txt'))
@@ -71,7 +93,6 @@ def fetch_dataset(output_filepath):
                 'Requesting replay for Episode ID {} with priority {}'.format(
                     episode_id, episode_priority))
 
-            # TODO: os.environ['DOWNLOAD_FILEPATH']
             filepath = str(DOWNLOAD_FILEPATH.joinpath(
                 'replay_EPISODEID_{}_{}.json'.format(episode_id, time.time())))
             response = api.replay.episode(episode_id)
@@ -100,7 +121,6 @@ def fetch_dataset(output_filepath):
                 'Requesting metadata for Team ID {} with priority {}'.format(
                     team_id, team_priority))
 
-            # TODO: os.environ['DOWNLOAD_FILEPATH']
             filepath = str(DOWNLOAD_FILEPATH.joinpath(
                 'metadata_TEAMID_{}_{}.json'.format(team_id, time.time())))
             response = api.episodes.team(team_id)
@@ -109,18 +129,14 @@ def fetch_dataset(output_filepath):
             scraped_teams.add(team_id)
 
             teams_priorities.update(get_team_priority_map(response))
-            # TODO: os.environ
             teams_priorities = synchronize_priority_map(
                 teams_priorities, TEAM_PMAP_FILEPATH, scraped_teams)
-            # TODO: os.environ
             teams_queue = get_min_weighted_priority_queue(
                 teams_priorities, TEAM_WATERMARK)
 
             episodes_priorities.update(get_episode_priority_map(response))
-            # TODO: os.environ
             episodes_priorities = synchronize_priority_map(
                 episodes_priorities, EPISODE_PMAP_FILEPATH, scraped_episodes)
-            # TODO: os.environ
             episodes_queue = get_max_weighted_priority_queue(
                 episodes_priorities, EPISODE_WATERMARK, request_budget)
             discovery_budget = discovery_budget - 1
@@ -153,7 +169,7 @@ def synchronize_list_to_disk(filepath, data, overwrite):
             with open(filepath, 'r') as f:
                 data.update([int(x) for x in f.readlines()])
         except FileNotFoundError:
-            logging.warn(
+            logging.warning(
                 'Failed to synchronize from disk. File {} is empty.'.format(
                     filepath))
     try:
@@ -171,7 +187,7 @@ def synchronize_dict_to_disk(filepath, data, overwrite):
             with open(filepath, 'r') as f:
                 data.update(json.load(f))
         except FileNotFoundError:
-            logging.warn(
+            logging.warning(
                 'Failed to synchronize from disk. File {} is empty.'.format(
                     filepath))
     try:

@@ -5,15 +5,30 @@ Created by Two Sigma in 2016, more than 15,000 people around the world have part
 
 The challenge is to create an agent that can succeed in the game of Halite IV.  (Kaggle Proj) https://www.kaggle.com/c/halite
 
-# How-to Perform Inference
+# How-to Pull Episode Replays
+This can module can be run to scrape episode replays from Kaggle.
+These episode replays will be exported to "data/raw" as JSON.
+This scraper respects the 60 request/minute rate-limit.
+It can be configured further by "# How-to Configure" section.
+Source code is available in `./halite_agent/data/fetch_dataset.py`.
+Notebook used to develop the code is in `./notebooks/1-2-iwong-scraper.ipynb`.
 
 ```bash
 $ conda create -n testenv python=3.6
 $ conda activate testenv
-$ pip install halite
+$ pip install halite-agent
+$ python3 -m halite_agent.data.fetch_dataset data/raw
+```
 
-$ # TODO
+# How-to Configure
 
+```
+HALITE_AGENT_FETCH_DATA_EPISODE_WATERMARK=1100 # pull games with avg. score > 1100
+HALITE_AGENT_FETCH_DATA_TEAM_WATERMARK=25 # pull teams with rank > 25
+HALITE_AGENT_FETCH_DATA_REQUEST_LIMIT=10 # run scraper that can make only 10 requests
+HALITE_AGENT_FETCH_DATA_DISCOVERY_BUDGET=0.1 # used 10% of requests to query for new team metadata
+HALITE_AGENT_FETCH_DATA_SCRAPER_METADATA_FILEPATH='./scraper_metadata' # store scraper metadata files here
+HALITE_AGENT_FETCH_DATA_ARBITRARY_TEAM_ID='5118174' # use this team id to bootstrap the scraper
 ```
 
 # How-to Develop
@@ -24,10 +39,7 @@ $ cd halite/
 $ make create_environment
 $ conda activate halite
 $ make requirements
-$ vim my_changes.py
-$ make data
-$ make model
-$ make predictions
+$ vim ...
 ```
 
 # Other Commands

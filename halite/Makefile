@@ -7,7 +7,7 @@
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BUCKET = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
 PROFILE = default
-PROJECT_NAME = halite
+PROJECT_NAME = halite-agent
 PYTHON_INTERPRETER = python3
 
 ifeq (,$(shell which conda))
@@ -28,7 +28,8 @@ requirements: test_environment
 
 ## Make Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py data/raw data/processed
+	$(PYTHON_INTERPRETER) halite_agent/data/fetch_dataset.py data/raw
+	#$(PYTHON_INTERPRETER) halite_agent/data/make_dataset.py data/raw data/processed
 
 ## Delete all compiled Python files
 clean:
@@ -47,7 +48,7 @@ publish:
 
 ## Lint using flake8
 lint:
-	flake8 halite
+	flake8 halite_agent
 
 ## Run unit tests
 test:
