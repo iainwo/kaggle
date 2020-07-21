@@ -1,0 +1,59 @@
+name: halite
+
+on: [push]
+
+jobs:
+  build:
+
+    name: Build on node ${{ matrix.python-version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest]
+        
+    env:
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        make requirements  
+        # python -m pip install --upgrade pip
+        # pip install -r requirements.txt
+      working-directory: ./halite/
+    - name: Lint
+      run: |
+        make lint
+      working-directory: ./halite/
+    - name: Test
+      run: |
+        make test
+      working-directory: ./halite/
+    - name: Build Distribution
+      run: |
+        make build
+      working-directory: ./halite/
+    - name: Archive Distribution
+      uses: actions/upload-artifact@v1
+      with:
+        name: dist
+        path: ./halite/dist/
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v1
+      with:
+        name: code-coverage-report
+        path: ./halite/test-results.xml
+    - name: Publish Distribution
+      run: |
+        make publish
+      working-directory: ./halite/
+      if: github.ref == 'refs/heads/master' && matrix.python-version == 3.7

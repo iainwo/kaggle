@@ -47,7 +47,7 @@ publish:
 
 ## Lint using flake8
 lint:
-	flake8 src
+	flake8 halite
 
 ## Run unit tests
 test:
