@@ -13,7 +13,7 @@ ipykernel
 # project requirements
 pandas==1.0.1
 pyarrow
-scikit-learn==0.22.2
+scikit-learn==1.5.0
 catboost
 seaborn
 shap
